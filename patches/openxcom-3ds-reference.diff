@@ -1,0 +1,105 @@
+diff --git a/src/Engine/CrossPlatform.cpp b/src/Engine/CrossPlatform.cpp
+index d422bb4..924622e 100644
+--- a/src/Engine/CrossPlatform.cpp
++++ b/src/Engine/CrossPlatform.cpp
+@@ -68,10 +68,12 @@
+ #include <unistd.h>
+ #include <sys/param.h>
+ #include <sys/types.h>
++#ifndef __3DS__
+ #include <pwd.h>
+ #include <execinfo.h>
+ #include <cxxabi.h>
+ #include <dlfcn.h>
++#endif
+ #include "Unicode.h"
+ #endif
+ #include <SDL.h>
+@@ -92,7 +94,7 @@ namespace CrossPlatform
+  */
+ void getErrorDialog()
+ {
+-#ifndef _WIN32
++#if !defined(_WIN32) && !defined(__3DS__)
+ 	if (system(NULL))
+ 	{
+ 		if (getenv("KDE_SESSION_UID") && system("which kdialog > /dev/null 2>&1") == 0)
+@@ -142,11 +144,16 @@ void showError(const std::string &error)
+ static char const *getHome()
+ {
+ 	char const *home = getenv("HOME");
++#ifdef __3DS__
++	if (!home)
++		home = "sdmc:/3ds/openxcom";
++#else
+ 	if (!home)
+ 	{
+ 		struct passwd *const pwd = getpwuid(getuid());
+ 		home = pwd->pw_dir;
+ 	}
++#endif
+ 	return home;
+ }
+ #endif
+@@ -159,6 +166,11 @@ static char const *getHome()
+ std::vector<std::string> findDataFolders()
+ {
+ 	std::vector<std::string> list;
++#ifdef __3DS__
++	list.push_back("sdmc:/3ds/openxcom/");
++	list.push_back("romfs:/");
++	return list;
++#endif
+ #ifdef __MORPHOS__
+ 	list.push_back("PROGDIR:");
+ 	return list;
+@@ -279,6 +291,10 @@ std::vector<std::string> findUserFolders()
+ {
+ 	std::vector<std::string> list;
+ 
++#ifdef __3DS__
++	list.push_back("sdmc:/3ds/openxcom/user/");
++	return list;
++#endif
+ #ifdef __MORPHOS__
+ 	list.push_back("PROGDIR:");
+ 	return list;
+@@ -350,6 +366,9 @@ std::vector<std::string> findUserFolders()
+  */
+ std::string findConfigFolder()
+ {
++#ifdef __3DS__
++	return "sdmc:/3ds/openxcom/user/";
++#endif
+ #ifdef __MORPHOS__
+ 	return "PROGDIR:";
+ #endif
+@@ -1125,7 +1144,7 @@ void stackTrace(void *ctx)
+ #else
+ 	Log(LOG_FATAL) << "Unfortunately, no stack trace information is available";
+ #endif
+-#elif __CYGWIN__
++#elif defined(__CYGWIN__) || defined(__3DS__)
+ 	Log(LOG_FATAL) << "Unfortunately, no stack trace information is available";
+ #else
+ 	void *frames[32];
+diff --git a/src/main.cpp b/src/main.cpp
+index 4147ff8..f60065e 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -85,8 +85,15 @@ Game *game = 0;
+ 
+ // If you can't tell what the main() is for you should have your
+ // programming license revoked...
++#ifdef __3DS__
++#include "3ds/platform3ds.h"
++#endif
++
+ int main(int argc, char *argv[])
+ {
++#ifdef __3DS__
++	openxcom3dsInit();
++#endif
+ #ifdef _MSC_VER
+ 	// Uncomment to check memory leaks in VS
+ 	//_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );

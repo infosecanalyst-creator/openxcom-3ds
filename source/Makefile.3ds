@@ -1,0 +1,64 @@
+# OpenXcom for the Nintendo 3DS (devkitARM + libctru + 3ds-sdl 1.2 portlibs).
+#   cd src && make -f Makefile.3ds -j8        -> ../openxcom.3dsx
+# Needs: DEVKITPRO, pacman packages 3ds-sdl 3ds-sdl_mixer 3ds-sdl_image
+#        3ds-libpng 3ds-zlib 3ds-libogg 3ds-libvorbisidec 3ds-mikmod (SDL_mixer deps),
+#        plus SDL_gfx and yaml-cpp built for the 3DS into $(PORTLIBS)
+#        (tools/build-portlibs.sh does those two).
+ifeq ($(strip $(DEVKITPRO)),)
+$(error DEVKITPRO is not set)
+endif
+DEVKITARM ?= $(DEVKITPRO)/devkitARM
+PORTLIBS  := $(DEVKITPRO)/portlibs/3ds
+CTRULIB   := $(DEVKITPRO)/libctru
+export PATH := $(DEVKITARM)/bin:$(DEVKITPRO)/tools/bin:$(PORTLIBS)/bin:$(PATH)
+
+CXX     := arm-none-eabi-g++
+OBJDIR  := ../obj3ds/
+SRCS    := $(filter-out Engine/Scalers/hq2x.cpp Engine/Scalers/hq3x.cpp Engine/Scalers/hq4x.cpp \
+                        Engine/Scalers/init.cpp Engine/Scalers/xbrz.cpp, \
+             $(wildcard *.cpp */*.cpp */*/*.cpp))
+OBJS    := $(patsubst %.cpp, $(OBJDIR)%.o, $(notdir $(SRCS)))
+BIN     := ../openxcom
+
+ARCH     := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
+CXXFLAGS ?= -O2
+CXXFLAGS += $(ARCH) -D__3DS__ -DARM11 -D__NO_OPENGL -D_GNU_SOURCE -std=gnu++11 -w \
+            -ffunction-sections -fdata-sections -mword-relocations \
+            -I$(PORTLIBS)/include -I$(PORTLIBS)/include/SDL -I$(CTRULIB)/include \
+            -include 3ds/mouse3ds.h
+LDFLAGS  := -specs=3dsx.specs $(ARCH) -Wl,--gc-sections -L$(PORTLIBS)/lib -L$(CTRULIB)/lib
+LIBS     := -lSDL_gfx -lSDL_mixer -lSDL_image -lSDL -lyaml-cpp \
+            -lpng -ljpeg -lz -lvorbisidec -logg -lmikmod -lmad -lcitro3d -lctru -lm
+
+all: git_version.h $(BIN).3dsx
+
+git_version.h: git_version.h.in
+	sed 's/@OPENXCOM_VERSION_STRING@/ 3ds-$(shell git -C .. rev-parse --short HEAD 2>/dev/null || echo src)/' $< > $@
+
+$(BIN).elf: $(OBJS)
+	$(CXX) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
+
+$(BIN).smdh: ../res/linux/icons/openxcom_48x48.png
+	smdhtool --create "OpenXcom" "X-COM: UFO Defense, open-source engine" "OpenXcom / 3DS port" $< $@
+
+../romfs:
+	@mkdir -p ../romfs && cp -r ../bin/common ../bin/standard ../romfs/
+	@if [ -d ../bin/UFO/GEODATA ]; then cp -r ../bin/UFO ../romfs/; fi
+
+$(BIN).3dsx: $(BIN).elf $(BIN).smdh ../romfs
+	3dsxtool $< $@ --smdh=$(BIN).smdh --romfs=../romfs
+
+define RULE
+$(OBJDIR)%.o:: $(1)%.cpp
+	@mkdir -p $(OBJDIR)
+	$(CXX) $(CXXFLAGS) -MMD -MP -c -o $$@ $$<
+endef
+$(eval $(call RULE,))
+$(foreach d,$(sort $(dir $(SRCS))),$(eval $(call RULE,$(d))))
+
+-include $(OBJS:.o=.d)
+
+clean:
+	rm -rf $(OBJDIR) $(BIN).elf $(BIN).3dsx $(BIN).smdh ../romfs
+
+.PHONY: all clean

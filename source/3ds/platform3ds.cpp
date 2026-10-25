@@ -61,7 +61,7 @@ void openxcom3dsInit()
 	// version lives in a side file). Native audio format saves ~18 MB; the
 	// game runs on the bottom (touch) screen at its native 320x200. 16-bit
 	// audio is required for the AdLib soundtrack (the 3DS can't play MIDI).
-	static const char *kCfgVersion = "4\n";
+	static const char *kCfgVersion = "5\n";
 	static const char *kVerPath = "sdmc:/3ds/openxcom/user/port-config-version";
 	bool writeCfg = true;
 	if (FILE *f = fopen(kVerPath, "r"))
@@ -78,7 +78,13 @@ void openxcom3dsInit()
 			      "  displayWidth: 320\n  displayHeight: 200\n  fullscreen: false\n"
 			      "  audioBitDepth: 16\n  audioSampleRate: 11025\n  audioChunkSize: 1024\n"
 			      "  playIntro: false\n  useOpenGL: false\n  keepAspectRatio: false\n"
-			      "  dragScrollButton: 1\n", f);
+			      "  dragScrollButton: 1\n"
+			      // touch/QoL defaults (UX audit): preview a path with the first tap and
+			      // move with the second; fewer confirmation screens; more info shown
+			      "  battleNewPreviewPath: 3\n  skipNextTurnScreen: true\n  battleAutoEnd: true\n"
+			      "  battleInstantGrenade: true\n  battleTooltips: true\n  showMoreStatsInInventoryView: true\n"
+			      "  allowBuildingQueue: true\n  craftLaunchAlways: true\n  showFundsOnGeoscape: true\n"
+			      "  globeFlightPaths: true\n  autosave: true\n", f);
 			fclose(f);
 		}
 		if (FILE *f = fopen(kVerPath, "w")) { fputs(kCfgVersion, f); fclose(f); }
@@ -95,9 +101,14 @@ void openxcom3dsInit()
 // straight from the HID service; Circle Pad and A/B drive the same cursor;
 // every mouse event the game sees is posted here and tagged with kMark.
 // SDL_GetMouseState/SDL_WarpMouse are redirected here (3ds/mouse3ds.h).
+bool g_endTurnArmed3ds = false;   // shown on the top screen (topscreen3ds.cpp)
+
 namespace
 {
 const int kGameW = 320, kGameH = 200;
+Uint32 g_endTurnArmedAt = 0;
+bool g_endTurnSentDown = false;
+u32 g_cstickPrev = 0;
 SDL_Joystick *g_pad = NULL;
 bool g_padTried = false;
 float g_cx = kGameW / 2, g_cy = kGameH / 2;   // cursor, game space
@@ -190,7 +201,6 @@ void remap(SDL_Event &ev, Ctx ctx)
 	{
 		if (k == SDLK_l) k = OpenXcom::Options::keyBattlePrevUnit;
 		else if (k == SDLK_r) k = OpenXcom::Options::keyBattleNextUnit;
-		else if (k == SDLK_x) k = OpenXcom::Options::keyBattleEndTurn;
 		else if (k == SDLK_y) k = OpenXcom::Options::keyBattleKneel;
 		else if (k == SDLK_LSHIFT) k = OpenXcom::Options::keyBattleLevelDown;
 		else if (k == SDLK_RSHIFT) k = OpenXcom::Options::keyBattleLevelUp;
@@ -230,6 +240,27 @@ void openxcom3dsPumpInput()
 		g_touching = false;
 		postButton(SDL_BUTTON_LEFT, false);
 	}
+
+	// New 3DS C-stick scrolls the map / globe (arrow keys), leaving the D-pad
+	// and Circle Pad free.
+	{
+		const u32 held = hidKeysHeld() & (KEY_CSTICK_UP | KEY_CSTICK_DOWN | KEY_CSTICK_LEFT | KEY_CSTICK_RIGHT);
+		const u32 changed = held ^ g_cstickPrev;
+		static const struct { u32 bit; SDLKey key; } map[4] = {
+			{ KEY_CSTICK_UP, SDLK_UP }, { KEY_CSTICK_DOWN, SDLK_DOWN }, { KEY_CSTICK_LEFT, SDLK_LEFT }, { KEY_CSTICK_RIGHT, SDLK_RIGHT } };
+		for (int i = 0; i < 4; ++i)
+			if (changed & map[i].bit)
+			{
+				SDL_Event e; memset(&e, 0, sizeof(e));
+				e.type = (held & map[i].bit) ? SDL_KEYDOWN : SDL_KEYUP;
+				e.key.state = (held & map[i].bit) ? SDL_PRESSED : SDL_RELEASED;
+				e.key.which = kMark;                       // so menus don't treat it as D-pad focus
+				e.key.keysym.sym = map[i].key;
+				SDL_PushEvent(&e);
+			}
+		g_cstickPrev = held;
+	}
+	if (g_endTurnArmed3ds && SDL_GetTicks() - g_endTurnArmedAt > 2500) g_endTurnArmed3ds = false;
 
 	const Uint32 now = SDL_GetTicks();
 	const float dt = g_lastTick ? (now - g_lastTick) / 1000.f : 0.f;
@@ -273,6 +304,20 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev)
 			ev.key.keysym.sym = OpenXcom::Options::keyCancel;   // B = back everywhere else
 			return true;
 		}
+		if (ctx == CTX_BATTLE && k == SDLK_x)
+		{
+			// End turn needs two presses within 2.5 s (prompt on the top screen)
+			if (down)
+			{
+				if (g_endTurnArmed3ds) { g_endTurnArmed3ds = false; g_endTurnSentDown = true; ev.key.keysym.sym = OpenXcom::Options::keyBattleEndTurn; return true; }
+				g_endTurnArmed3ds = true; g_endTurnArmedAt = SDL_GetTicks();
+				return false;
+			}
+			if (g_endTurnSentDown) { g_endTurnSentDown = false; ev.key.keysym.sym = OpenXcom::Options::keyBattleEndTurn; return true; }
+			return false;
+		}
+		if (down) g_endTurnArmed3ds = false;       // any other button cancels
+		if (ev.key.which == kMark) return true;    // C-stick arrows: always scroll, never menu focus
 		if (ctx == CTX_MENU && (k == SDLK_UP || k == SDLK_DOWN || k == SDLK_LEFT || k == SDLK_RIGHT))
 		{
 			if (down) snapFocus(st, k == SDLK_RIGHT ? 1 : k == SDLK_LEFT ? -1 : 0,

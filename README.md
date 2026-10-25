@@ -76,13 +76,14 @@ the bottom; both are 1:1 pixels (no stretching).
 
 | Button | Menus | Geoscape | Battlescape |
 |---|---|---|---|
-| Touch | click | click | click |
+| Touch | click | click | 1st tap previews path + TU cost, 2nd tap moves |
 | Circle Pad | cursor | cursor | cursor |
 | A | click | click | click |
 | B | back (Esc) | back (Esc) | right click (turn) |
 | D-pad | jump between buttons | rotate globe | scroll map |
+| C-stick (New 3DS) | - | rotate globe | scroll map |
 | L / R | - | zoom out / in | previous / next soldier |
-| X | - | intercept | end turn |
+| X | - | intercept | end turn (press twice) |
 | Y | - | bases | kneel |
 | ZL / ZR | - | - | view level down / up |
 | Start / Select | OK (Enter) / cancel (Esc) | | |

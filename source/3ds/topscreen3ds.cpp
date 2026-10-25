@@ -36,6 +36,14 @@
 #include "../Battlescape/BattlescapeState.h"
 #include "../Battlescape/Map.h"
 #include "../Battlescape/Camera.h"
+#include "../Battlescape/BattlescapeGame.h"
+#include "../Mod/RuleManufacture.h"
+#include "../Mod/RuleResearch.h"
+#include "../Savegame/Production.h"
+#include "../Savegame/ResearchProject.h"
+#include "../Battlescape/Pathfinding.h"
+
+extern bool g_endTurnArmed3ds;   // platform3ds.cpp: X pressed once, waiting for confirm
 
 namespace OpenXcom
 {
@@ -196,44 +204,120 @@ static std::string itemLine(BattleItem *it)
 	return s;
 }
 
+// Weapon modes for the selected soldier's main weapon: accuracy and TU cost
+// for snap / aimed / auto at a glance, so choosing a shot needs no menu.
+static void drawWeaponModes(Surface *top, BattleUnit *u, int x, int y)
+{
+	BattleItem *w = u->getItem("STR_RIGHT_HAND");
+	if (!w || !w->getRules()) w = u->getItem("STR_LEFT_HAND");
+	if (!w || !w->getRules())
+	{
+		text(top, x, y, "No weapon in hand", C_DIM);
+		return;
+	}
+	RuleItem *r = w->getRules();
+	text(top, x, y, itemLine(w), C_TEXT, false, 190);
+	struct M { BattleActionType t; const char *n; int tu; };
+	const M modes[3] = { { BA_SNAPSHOT, "Snap", r->getTUSnap() }, { BA_AIMEDSHOT, "Aimed", r->getTUAimed() },
+	                     { BA_AUTOSHOT, "Auto", r->getTUAuto() } };
+	int cx = x;
+	for (int i = 0; i < 3; ++i)
+	{
+		if (modes[i].tu <= 0) continue;
+		const int acc = u->getFiringAccuracy(modes[i].t, w);
+		const int tu = u->getActionTUs(modes[i].t, w);
+		const bool can = tu <= u->getTimeUnits();
+		std::string s = std::string(modes[i].n) + str(" %d%%", acc) + str(" %dTU", tu);
+		cx = text(top, cx, y + 10, s, can ? C_GOOD : C_DIM) + 8;
+	}
+}
+
+// Every soldier at once: TU and health bars, out/wounded marks. The selected
+// one is highlighted. Mirrors the squad strip of modern tactics games.
+static void drawRoster(Surface *top, SavedBattleGame *battle, BattleUnit *sel, int x0, int y0, int w)
+{
+	int n = 0;
+	for (std::vector<BattleUnit*>::iterator i = battle->getUnits()->begin(); i != battle->getUnits()->end(); ++i)
+		if ((*i)->getFaction() == FACTION_PLAYER && (*i)->getOriginalFaction() == FACTION_PLAYER) ++n;
+	if (!n) return;
+	const int cols = 2, rows = (std::min(n, 12) + 1) / 2, cw = w / cols;
+	int k = 0;
+	for (std::vector<BattleUnit*>::iterator i = battle->getUnits()->begin(); i != battle->getUnits()->end() && k < 12; ++i)
+	{
+		BattleUnit *u = *i;
+		if (u->getFaction() != FACTION_PLAYER || u->getOriginalFaction() != FACTION_PLAYER) continue;
+		const int x = x0 + (k / rows) * cw, y = y0 + (k % rows) * 9;
+		++k;
+		if (u == sel) rect(top, x, y, cw - 2, 9, C_FRAME);
+		std::string nm = u->getName(g_game->getLanguage());
+		if (nm.size() > 9) nm = nm.substr(0, 9);
+		const bool out = u->isOut();
+		text(top, x + 1, y, nm, out ? C_BAD : (u == sel ? C_TITLE : C_TEXT), false, 56);
+		if (out) { text(top, x + 58, y, "DOWN", C_BAD); continue; }
+		UnitStats *st = u->getBaseStats();
+		const int bw = cw - 64;
+		const int tu = st->tu ? (bw * u->getTimeUnits() / st->tu) : 0;
+		const int hp = st->health ? (bw * u->getHealth() / st->health) : 0;
+		rect(top, x + 58, y + 2, std::max(0, tu), 2, C_GOOD);
+		rect(top, x + 58, y + 5, std::max(0, hp), 2, u->getFatalWounds() ? C_BAD : C_WARN);
+	}
+}
+
+static int visibleEnemies(SavedBattleGame *battle)
+{
+	int n = 0;
+	for (std::vector<BattleUnit*>::iterator i = battle->getUnits()->begin(); i != battle->getUnits()->end(); ++i)
+		if ((*i)->getFaction() == FACTION_HOSTILE && !(*i)->isOut() && (*i)->getVisible()) ++n;
+	return n;
+}
+
 static void drawBattle(Surface *top, SavedBattleGame *battle)
 {
 	const bool playerTurn = battle->getSide() == FACTION_PLAYER;
 	text(top, 4, 3, str("TURN %d", battle->getTurn()), C_TITLE, true);
-	text(top, 96, 7, playerTurn ? "X-COM" : (battle->getSide() == FACTION_HOSTILE ? "ALIENS" : "CIVILIANS"),
+	text(top, 80, 7, playerTurn ? "X-COM" : (battle->getSide() == FACTION_HOSTILE ? "ALIENS" : "CIVILIANS"),
 	     playerTurn ? C_GOOD : C_BAD);
+	const int enemies = visibleEnemies(battle);
+	text(top, 130, 7, enemies ? str("%d alien(s) in sight", enemies) : std::string("No aliens in sight"), enemies ? C_BAD : C_DIM);
 
-	drawMinimap(top, battle, 206, 2, 112, 152);
+	drawMinimap(top, battle, 222, 22, 96, 96);
 
-	frame(top, 2, 22, 200, 132);
 	BattleUnit *u = battle->getSelectedUnit();
+	frame(top, 2, 22, 218, 96);
 	if (!u || u->getFaction() != FACTION_PLAYER)
 	{
-		text(top, 10, 30, playerTurn ? "No soldier selected" : "Enemy movement...", C_DIM);
+		text(top, 10, 30, playerTurn ? "No soldier selected (L/R to pick)" : "Enemy movement...", C_DIM);
 	}
 	else
 	{
 		UnitStats *st = u->getBaseStats();
-		text(top, 8, 26, u->getName(g_game->getLanguage()), C_TEXT, true, 190);
+		text(top, 6, 25, u->getName(g_game->getLanguage()), C_TEXT, true, 150);
 		std::string rank = u->getRankString();
-		if (!rank.empty()) text(top, 8, 43, tr(rank), C_DIM);
-		if (u->isKneeled()) text(top, 150, 43, "KNEELING", C_WARN);
-		bar(top, 8, 56, 190, "TU", u->getTimeUnits(), st->tu, C_GOOD);
-		bar(top, 8, 66, 190, "Energy", u->getEnergy(), st->stamina, C_WARN);
-		bar(top, 8, 76, 190, "Health", u->getHealth(), st->health, u->getFatalWounds() ? C_BAD : C_GOOD);
-		bar(top, 8, 86, 190, "Morale", u->getMorale(), 100, C_BLUE);
-		text(top, 8, 98, str("React %d", st->reactions), C_TEXT);
-		text(top, 70, 98, str("Fire %d", st->firing), C_TEXT);
-		text(top, 128, 98, str("Throw %d", st->throwing), C_TEXT);
-		text(top, 8, 108, str("Str %d", st->strength), C_TEXT);
-		text(top, 70, 108, str("Brave %d", st->bravery), C_TEXT);
-		if (u->getFatalWounds()) text(top, 128, 108, str("Wounds %d", u->getFatalWounds()), C_BAD);
-		text(top, 8, 122, "R:", C_DIM); text(top, 22, 122, itemLine(u->getItem("STR_RIGHT_HAND")), C_TEXT, false, 176);
-		text(top, 8, 132, "L:", C_DIM); text(top, 22, 132, itemLine(u->getItem("STR_LEFT_HAND")), C_TEXT, false, 176);
+		if (!rank.empty()) text(top, 6, 41, tr(rank), C_DIM);
+		if (u->isKneeled()) text(top, 160, 41, "KNEELING", C_WARN);
+		// path preview cost (first tap previews, second tap moves)
+		Pathfinding *pf = battle->getPathfinding();
+		int barW = 212;
+		bar(top, 6, 52, barW, "TU", u->getTimeUnits(), st->tu, C_GOOD);
+		if (pf && pf->isPathPreviewed())
+		{
+			const int cost = pf->getTotalTUCost();
+			const bool ok = cost <= u->getTimeUnits();
+			text(top, 120, 41, str("Move: %d TU", cost), ok ? C_GOOD : C_BAD);
+		}
+		bar(top, 6, 61, barW, "Health", u->getHealth(), st->health, u->getFatalWounds() ? C_BAD : C_GOOD);
+		bar(top, 6, 70, barW, "Energy", u->getEnergy(), st->stamina, C_WARN);
+		bar(top, 6, 79, barW, "Morale", u->getMorale(), 100, C_BLUE);
+		if (u->getFatalWounds()) text(top, 6, 88, str("FATAL WOUNDS: %d", u->getFatalWounds()), C_BAD);
+		else text(top, 6, 88, str("React %d", st->reactions) + str("  Fire %d", st->firing) + str("  Brave %d", st->bravery), C_DIM);
+		drawWeaponModes(top, u, 6, 98);
 	}
-	text(top, 4, 160, "L/R soldier   Y kneel   X end turn", C_DIM);
-	text(top, 4, 170, "D-pad scroll   ZL/ZR level   Select menu", C_DIM);
-	text(top, 4, 182, "Circle Pad cursor   A click   B right-click", C_DIM);
+	frame(top, 2, 120, 316, 62);
+	drawRoster(top, battle, u, 5, 123, 310);
+	if (g_endTurnArmed3ds)
+		text(top, 4, 186, "Press X again to END TURN   (any other button cancels)", C_WARN);
+	else
+		text(top, 4, 186, "Tap: preview path, tap again: move   L/R soldier  X x2 end turn", C_DIM);
 }
 
 // ---- Geoscape / bases -----------------------------------------------------
@@ -252,34 +336,58 @@ static void drawStrategic(Surface *top, SavedGame *save)
 	int ufos = 0;
 	for (std::vector<Ufo*>::iterator i = save->getUfos()->begin(); i != save->getUfos()->end(); ++i)
 		if ((*i)->getDetected()) ++ufos;
-	frame(top, 2, 22, 316, 16);
-	text(top, 8, 26, ufos ? str("UFOs on radar: %d", ufos) : std::string("No UFOs on radar"), ufos ? C_BAD : C_DIM);
+	frame(top, 2, 22, 316, 14);
+	text(top, 8, 25, ufos ? str("UFOs on radar: %d", ufos) : std::string("No UFOs on radar"), ufos ? C_BAD : C_DIM);
 
-	int y = 42;
-	for (std::vector<Base*>::iterator b = save->getBases()->begin(); b != save->getBases()->end() && y < 156; ++b)
+	// Research and manufacturing: the usual reason to open a base screen.
+	int y = 40;
+	frame(top, 2, y, 316, 64);
+	text(top, 8, y + 3, "RESEARCH", C_TITLE);
+	text(top, 164, y + 3, "MANUFACTURE", C_TITLE);
+	int ry = y + 14, my = y + 14;
+	for (std::vector<Base*>::iterator b = save->getBases()->begin(); b != save->getBases()->end(); ++b)
 	{
-		Base *base = *b;
-		const int rows = 1 + std::min<int>(3, base->getCrafts()->size());
-		const int h = 12 + rows * 10;
-		if (y + h > 158) break;
-		frame(top, 2, y, 316, h);
-		text(top, 8, y + 3, base->getName(lang), C_TITLE);
-		text(top, 130, y + 3, str("Soldiers %d", base->getAvailableSoldiers()), C_TEXT);
-		text(top, 200, y + 3, str("Sci %d", base->getScientists()), C_TEXT);
-		text(top, 252, y + 3, str("Eng %d", base->getEngineers()), C_TEXT);
-		int cy = y + 14, n = 0;
-		for (std::vector<Craft*>::iterator c = base->getCrafts()->begin(); c != base->getCrafts()->end() && n < 3; ++c, ++n)
+		const std::vector<ResearchProject*> &rp = (*b)->getResearch();
+		for (std::vector<ResearchProject*>::const_iterator r = rp.begin(); r != rp.end() && ry < y + 60; ++r)
+		{
+			const int spent = (*r)->getSpent(), cost = (*r)->getCost(), sci = (*r)->getAssigned();
+			std::string name = tr((*r)->getRules()->getName());
+			text(top, 8, ry, name, C_TEXT, false, 108);
+			if (sci > 0 && cost > spent) text(top, 118, ry, str("~%dd", (cost - spent + sci - 1) / sci), C_DIM);
+			else text(top, 118, ry, sci ? "done" : "idle", sci ? C_GOOD : C_WARN);
+			ry += 9;
+		}
+		const std::vector<Production*> &pp = (*b)->getProductions();
+		for (std::vector<Production*>::const_iterator m = pp.begin(); m != pp.end() && my < y + 60; ++m)
+		{
+			std::string name = tr((*m)->getRules()->getName());
+			text(top, 164, my, name, C_TEXT, false, 100);
+			text(top, 268, my, str("%d/", (*m)->getAmountProduced()) + str("%d", (*m)->getAmountTotal()), C_DIM);
+			my += 9;
+		}
+	}
+	if (ry == y + 14) text(top, 8, ry, "Nothing being researched", C_WARN);
+	if (my == y + 14) text(top, 164, my, "Nothing in production", C_DIM);
+
+	// Craft: where they are and whether they can fly.
+	y = 108;
+	frame(top, 2, y, 316, 70);
+	int cy = y + 3;
+	for (std::vector<Base*>::iterator b = save->getBases()->begin(); b != save->getBases()->end() && cy < y + 62; ++b)
+	{
+		text(top, 8, cy, (*b)->getName(lang), C_TITLE, false, 120);
+		text(top, 130, cy, str("Soldiers %d", (*b)->getAvailableSoldiers()) + str("  Sci %d", (*b)->getScientists()) + str("  Eng %d", (*b)->getEngineers()), C_DIM);
+		cy += 10;
+		for (std::vector<Craft*>::iterator c = (*b)->getCrafts()->begin(); c != (*b)->getCrafts()->end() && cy < y + 62; ++c)
 		{
 			Craft *cr = *c;
 			text(top, 14, cy, cr->getName(lang), C_TEXT, false, 110);
 			text(top, 130, cy, tr(cr->getStatus()), C_DIM, false, 100);
 			text(top, 236, cy, str("Fuel %d%%", cr->getFuelPercentage()), cr->getFuelPercentage() < 30 ? C_WARN : C_DIM);
-			cy += 10;
+			cy += 9;
 		}
-		y += h + 2;
 	}
-	text(top, 4, 170, "L/R zoom   D-pad rotate   Select options", C_DIM);
-	text(top, 4, 182, "Circle Pad cursor   A click   B right-click", C_DIM);
+	text(top, 4, 186, "L/R zoom  X intercept  Y bases  Select options", C_DIM);
 }
 
 // ---- menus ----------------------------------------------------------------
@@ -291,13 +399,13 @@ static void drawMenu(Surface *top)
 	frame(top, 40, 72, 240, 102);
 	int y = 80;
 	const char *lines[] = {
-		"Tap the bottom screen to click",
-		"Circle Pad  move cursor",
-		"A  click     B  right-click / back",
-		"D-pad  move between buttons",
-		"Start  OK    Select  cancel / menu",
-		"In battle:  L/R soldier  Y kneel",
-		"            X end turn",
+		"Tap the bottom screen: click",
+		"Circle Pad cursor   A click   B back",
+		"D-pad: jump between buttons",
+		"C-stick: scroll map / globe",
+		"Battle: tap to preview a path, tap",
+		"  again to move.  L/R soldier  Y kneel",
+		"  X twice: end turn   ZL/ZR level",
 	};
 	for (int i = 0; i < 7; ++i, y += 12) text(top, 52, y, lines[i], C_TEXT);
 }

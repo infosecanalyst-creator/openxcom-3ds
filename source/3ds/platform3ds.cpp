@@ -343,3 +343,34 @@ extern "C" void openxcom3dsWarpMouse(Uint16 x, Uint16 y)
 	moveCursor(x, y);
 }
 #endif
+
+// ---------------------------------------------------------------------------
+// Text entry: the system keyboard applet (the game's TextEdit fields have no
+// keyboard to type on otherwise).
+bool openxcom3dsKeyboard(const std::string &current, std::string &out)
+{
+	SwkbdState kb;
+	char buf[96];
+	swkbdInit(&kb, SWKBD_TYPE_NORMAL, 2, 40);
+	swkbdSetInitialText(&kb, current.c_str());
+	swkbdSetHintText(&kb, "Enter a name");
+	swkbdSetValidation(&kb, SWKBD_NOTEMPTY_NOTBLANK, 0, 0);
+	const SwkbdButton b = swkbdInputText(&kb, buf, sizeof(buf));
+	if (b != SWKBD_BUTTON_CONFIRM)
+		return false;
+	out = buf;
+	return true;
+}
+
+void openxcom3dsPostReturn()
+{
+	for (int i = 0; i < 2; ++i)
+	{
+		SDL_Event e; memset(&e, 0, sizeof(e));
+		e.type = i == 0 ? SDL_KEYDOWN : SDL_KEYUP;
+		e.key.state = i == 0 ? SDL_PRESSED : SDL_RELEASED;
+		e.key.which = kMark;                 // passes the input layer unchanged
+		e.key.keysym.sym = SDLK_RETURN;
+		SDL_PushEvent(&e);
+	}
+}

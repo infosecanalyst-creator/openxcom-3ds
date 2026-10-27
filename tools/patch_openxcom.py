@@ -192,6 +192,22 @@ rw(MOD,
    "\t\t\tss << name << id;\n\t\t\tmusic = getMusic(ss.str(), false);\n\t\t\tif (!music) music = _muteMusic; // 3DS: missing track = silence, not a crash\n",
    "missing track = silence, not a crash")
 
+# TextEdit.cpp: when a text field takes focus, type into it with the 3DS
+# system keyboard, then press Enter for the player (accepts the dialog).
+TE = "src/Interface/TextEdit.cpp"
+rw(TE,
+   '#include "TextEdit.h"\n',
+   '#include "TextEdit.h"\n#ifdef __3DS__\n#include "../3ds/platform3ds.h"\n#endif\n',
+   '#include "../3ds/platform3ds.h"')
+rw(TE,
+   "\t\t\t_timer->start();\n\t\t\tif (_modal)\n\t\t\t\t_state->setModal(this);\n",
+   "\t\t\t_timer->start();\n\t\t\tif (_modal)\n\t\t\t\t_state->setModal(this);\n"
+   "#ifdef __3DS__\n\t\t\t{\n\t\t\t\tstd::string typed;\n"
+   "\t\t\t\tif (openxcom3dsKeyboard(getText(), typed))\n\t\t\t\t{\n"
+   "\t\t\t\t\tsetText(typed);\n\t\t\t\t\t_caretPos = _value.length();\n"
+   "\t\t\t\t\topenxcom3dsPostReturn(); // 3DS keyboard: accept\n\t\t\t\t}\n\t\t\t}\n#endif\n",
+   "3DS keyboard: accept")
+
 os.makedirs(os.path.join(ROOT, "src", "3ds"), exist_ok=True)
 for f in ("platform3ds.h", "platform3ds.cpp", "scalers_stub.cpp", "topscreen3ds.h", "topscreen3ds.cpp", "mouse3ds.h"):
     shutil.copy(os.path.join(PORT, "3ds", f), os.path.join(ROOT, "src", "3ds", f))

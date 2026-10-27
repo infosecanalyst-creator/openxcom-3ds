@@ -86,7 +86,8 @@ the bottom; both are 1:1 pixels (no stretching).
 | X | - | intercept | end turn (press twice) |
 | Y | - | bases | kneel |
 | ZL / ZR | - | - | view level down / up |
-| Start / Select | OK (Enter) / cancel (Esc) | | |
+| Start | instruction manual | instruction manual | instruction manual |
+| Select | cancel (Esc) | options (Esc) | menu (Esc) |
 
 Input notes: 3ds-sdl's own touch-to-mouse events are dropped (in dual-screen
 mode it clamps the touch position to the top half). The touch screen is read
@@ -96,6 +97,14 @@ redirected to the port's cursor via a forced include (`3ds/mouse3ds.h`).
 Desktop harness: the same patched tree builds natively with `-D__3DS__` and a
 fake `3ds.h` (touch = lower half of the window) and runs under Xvfb; that is
 how the layout and input are tested before hardware.
+
+## In-game manual
+
+Start opens a built-in manual (text on the top screen, section buttons on
+the touch screen; Circle Pad / D-pad scroll, L/R change section, B or Start
+closes). The game waits while it is open. The text is `docs/manual.txt`,
+compiled into `src/3ds/manual_text.h`; a `manual.txt` in
+`sdmc:/3ds/openxcom/` replaces it without rebuilding.
 
 ## Phase 2 ideas (dual screen)
 

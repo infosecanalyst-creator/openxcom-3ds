@@ -387,7 +387,7 @@ static void drawStrategic(Surface *top, SavedGame *save)
 			cy += 9;
 		}
 	}
-	text(top, 4, 186, "L/R zoom  X intercept  Y bases  Select options", C_DIM);
+	text(top, 4, 186, "L/R zoom  X intercept  Y bases  Start manual", C_DIM);
 }
 
 // ---- menus ----------------------------------------------------------------
@@ -406,8 +406,9 @@ static void drawMenu(Surface *top)
 		"Battle: tap to preview a path, tap",
 		"  again to move.  L/R soldier  Y kneel",
 		"  X twice: end turn   ZL/ZR level",
+		"Start: instruction manual",
 	};
-	for (int i = 0; i < 7; ++i, y += 12) text(top, 52, y, lines[i], C_TEXT);
+	for (int i = 0; i < 8; ++i, y += 12) text(top, 52, y, lines[i], C_TEXT);
 }
 
 void render(Game *game, Surface *top)

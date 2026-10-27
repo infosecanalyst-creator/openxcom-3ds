@@ -1,0 +1,163 @@
+#pragma once
+// Generated from docs/manual.txt
+static const char *const kManualText = R"MANUAL(# Welcome
+X-COM: UFO Defense (OpenXcom) on the New 3DS.
+
+Aliens are visiting Earth. You run X-COM, a secret organisation funded by the world's nations. Shoot down UFOs, raid the crash sites, study what you recover, and turn alien technology against them.
+
+The game has two halves:
+- The Geoscape: the world map, where time passes, UFOs appear and you run your bases.
+- The Battlescape: turn-based ground combat with your soldiers.
+
+Press Start at any time to open this manual. The game waits underneath.
+
+## Using this manual
+- Circle Pad or D-pad up/down: scroll.
+- L / R or D-pad left/right: change section.
+- Tap a section on the touch screen to jump to it.
+- B, Start or Close: back to the game.
+
+# The two screens
+## Bottom screen (touch)
+The game itself, exactly as on a PC. Tap it with the stylus as if it were a mouse.
+
+## Top screen (information)
+The top screen shows what you would otherwise have to open a window for. It changes with what you are doing:
+- Battle: the selected soldier's time units, energy, health and morale; stats; weapons and fire modes; the whole squad; a minimap of the current level.
+- Geoscape and bases: date, time and funds; UFOs on radar; research and manufacture in progress; each base's staff and craft.
+- Menus: a summary of the controls.
+
+# Touch and cursor
+- Tap: left click where you tap.
+- Circle Pad: moves the mouse cursor. Push gently for fine movement, fully for speed.
+- A: left click at the cursor.
+- B: back / cancel. In battle, B is a right click, which turns the soldier to face the cursor.
+- D-pad in menus: jumps the cursor to the nearest button in that direction, then press A.
+
+## Typing names
+When a name field opens (a new base, a soldier, a save), the 3DS keyboard appears. Type the name and press OK; the game accepts it for you.
+
+# Buttons
+| Touch | Click (left mouse)
+| Circle Pad | Move the cursor
+| A | Click at the cursor
+| B | Back; right click in battle
+| D-pad | Menus: jump between buttons
+| C-stick | Scroll the map / rotate globe
+| L / R | Globe: zoom out / in
+| L / R | Battle: previous / next soldier
+| X | Globe: intercept
+| X twice | Battle: end turn
+| Y | Globe: bases. Battle: kneel
+| ZL / ZR | Battle: view level down / up
+| Select | Cancel (Esc)
+| Start | Open this manual
+
+# Starting a campaign
+1. Choose New Game and a difficulty. Beginner is a good first choice.
+2. Tap a spot on the globe for your first base. Pick a place near rich countries: North America or Europe.
+3. Name the base with the keyboard.
+4. You start with a base, a few soldiers, interceptors, a Skyranger troop carrier and some money.
+5. Before you press any time button, go to Bases and start research (Laser Weapons is a strong first project).
+
+The council judges you every month. Countries whose skies you protect pay more; ignore them and they cut funding or sign deals with the aliens.
+
+# The Geoscape
+## Time
+The buttons on the right control time: 5 sec, 1 min, 5 mins, 30 mins, 1 hour, 1 day. Time stops on its own when something needs your attention.
+
+## Buttons on the right
+- Intercept: send craft after a target.
+- Bases: manage your bases.
+- Graphs: funding and alien activity.
+- Ufopaedia: everything you have learned.
+- Options: save, load, quit.
+- Funding: what each country pays.
+
+## UFOs
+When radar detects a UFO, time stops. Choose a base and an interceptor to chase it. In the dogfight window pick an attack stance (cautious, standard, aggressive) and try to shoot it down over land. A downed UFO leaves a crash site: send the Skyranger with soldiers.
+
+## Terror sites and landed UFOs
+Landed UFOs and terror sites can also be raided. Terror sites expire, so go quickly.
+
+# Bases
+## Facilities
+Build Facilities adds rooms next to existing ones. Each takes days to build and costs money every month.
+- Living Quarters: room for 50 staff.
+- Laboratory: room for 50 scientists.
+- Workshop: room for 50 engineers.
+- General Stores: room for equipment.
+- Radar: detects UFOs near the base.
+- Hangar: one craft each.
+- Alien Containment: needed to keep live aliens.
+
+## Staff and money
+- Transfer and Purchase/Recruit: hire soldiers, scientists and engineers, buy craft and equipment.
+- Sell/Sack: sell alien loot. Alien alloys and Elerium are valuable.
+- Monthly costs include salaries and facility upkeep. Watch your funds on the top screen.
+
+## Research and manufacture
+- Research: assign scientists to projects. More scientists, faster results.
+- Manufacture: engineers build what you have researched. Selling made items can earn money.
+The top screen lists every project in progress and roughly how many days remain.
+
+# The Battlescape
+Battles are turn-based. Each soldier has Time Units (TU) to spend each turn on moving, turning, kneeling and firing.
+
+## Moving
+1. Tap a soldier to select them, or use L / R.
+2. Tap a tile. A path appears with its TU cost (also on the top screen).
+3. Tap the same tile again to move there.
+Green numbers mean you can make it this turn; red means not enough TU.
+
+## Firing
+Tap the weapon in the soldier's hand (bottom corners of the HUD) and pick a mode:
+- Snap shot: quick, fairly accurate.
+- Aimed shot: slow, most accurate.
+- Auto shot: three rounds, less accurate.
+Then tap the target. The top screen lists each fire mode with its accuracy and TU cost.
+
+## Ending the turn
+Press X twice within a couple of seconds, or tap the end turn button on the HUD. Then the aliens move.
+
+# Battle tactics
+- Keep TU spare at the end of a move. Soldiers with TU left can take reaction shots at aliens moving in view.
+- Kneel (Y) before firing for better accuracy.
+- Move in pairs and stay behind cover.
+- The Skyranger is your base: unload carefully on the first turn.
+- Throw smoke or use night for cover; flares light the dark.
+- Stun live aliens with a Stun Rod for research (needs Alien Containment).
+- A soldier with low morale may panic. Bravery and officers help.
+- Wounded soldiers bleed. Use a Medi-Kit or finish quickly.
+
+# Inventory and equipment
+Before a mission, Equip Craft lets you load the Skyranger. In battle, tap the soldier's portrait or the inventory button to open their inventory.
+- Drag items by tapping them, then tapping the destination slot.
+- Hands hold what is used; the belt and backpack hold spares.
+- Heavier loads cost TU and energy.
+- Always pack spare ammo and a grenade or two.
+
+# Ufopaedia
+Everything you research unlocks entries in the Ufopaedia: weapons, armour, craft, aliens and facilities. Open it from the Geoscape button or the battle menu. It explains what each new item does.
+
+# Saving and loading
+- Geoscape: Options, then Save Game or Load Game.
+- Battle: open the menu button on the HUD, then Save.
+- Autosave is on: the game saves at the start of each month and each mission.
+Saves live in sdmc:/3ds/openxcom/user/ on the SD card.
+
+# Tips
+- Shoot UFOs down over land, not the sea. Sea crashes are lost.
+- Research Laser Weapons, then Alien Alloys and the alien weapons you recover.
+- Build a second base with radar to see more of the world.
+- Sell spare alien loot early on to stay in profit.
+- A dead soldier is gone for good. Rookies learn fast; keep veterans alive.
+- Keep at least one interceptor at each base that has radar.
+
+# Troubleshooting
+- Game data: the original X-COM folders (GEODATA, MAPS, UFOGRAPH and the rest) go in sdmc:/3ds/openxcom/UFO/ unless they were built in.
+- Options reset: delete sdmc:/3ds/openxcom/user/options.cfg and restart.
+- Cursor stuck: touch the screen once; the cursor jumps to the stylus.
+- No music: the 3DS cannot play MIDI. The AdLib soundtrack needs 16-bit audio, which is the default.
+- Replace this manual: put your own manual.txt in sdmc:/3ds/openxcom/.
+)MANUAL";

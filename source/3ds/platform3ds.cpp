@@ -215,6 +215,109 @@ void remap(SDL_Event &ev, Ctx ctx)
 }
 }
 
+// ---- in-game manual (Start) -------------------------------------------------
+// Runs its own little loop while open, so the game (and Geoscape time) waits
+// underneath. Text on the top screen, section buttons on the touch screen.
+#include "manual3ds.h"
+#include "manual_text.h"
+namespace
+{
+manual3ds::Manual g_manual;
+bool g_manualLoaded = false;
+bool g_touchBlocked = false;    // stylus still down after closing the manual
+
+void blitCanvas(SDL_Surface *scr, const manual3ds::Canvas &cv, int y0)
+{
+	if (SDL_MUSTLOCK(scr)) SDL_LockSurface(scr);
+	const int bpp = scr->format->BytesPerPixel;
+	for (int y = 0; y < cv.h && y0 + y < scr->h; ++y)
+	{
+		Uint8 *row = (Uint8 *)scr->pixels + (y0 + y) * scr->pitch;
+		const uint8_t *src = cv.px + y * cv.w * 3;
+		for (int x = 0; x < cv.w && x < scr->w; ++x, src += 3)
+		{
+			const Uint32 c = SDL_MapRGB(scr->format, src[0], src[1], src[2]);
+			if (bpp == 4) ((Uint32 *)row)[x] = c;
+			else if (bpp == 2) ((Uint16 *)row)[x] = (Uint16)c;
+		}
+	}
+	if (SDL_MUSTLOCK(scr)) SDL_UnlockSurface(scr);
+}
+
+void runManual()
+{
+	if (!g_manualLoaded)
+	{
+		g_manual.load(kManualText, "sdmc:/3ds/openxcom/manual.txt", "X-COM for 3DS: manual");
+		g_manualLoaded = true;
+	}
+	SDL_Surface *scr = SDL_GetVideoSurface();
+	if (!scr) return;
+	// release any held mouse button so the game doesn't see a stuck click
+	if (g_buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) postButton(SDL_BUTTON_LEFT, false);
+	if (g_buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) postButton(SDL_BUTTON_RIGHT, false);
+	g_touching = false;
+
+	const int half = scr->h / 2;               // 200: top rows, then the touch screen
+	static std::vector<uint8_t> topPx, botPx;
+	topPx.assign(scr->w * half * 3, 0);
+	botPx.assign(scr->w * half * 3, 0);
+	manual3ds::Canvas top = { scr->w, half, topPx.data() };
+	manual3ds::Canvas bot = { scr->w, half, botPx.data() };
+
+	g_manual.open();
+	hidSetRepeatParameters(20, 6);
+	bool redraw = true;
+	while (aptMainLoop())
+	{
+		hidScanInput();
+		const u32 down = hidKeysDown(), rep = hidKeysDownRepeat();
+		manual3ds::Input mi;
+		static const struct { u32 b; uint32_t k; bool rep; } map[] = {
+			{ KEY_DUP, manual3ds::K_UP, true }, { KEY_DDOWN, manual3ds::K_DOWN, true },
+			{ KEY_DLEFT, manual3ds::K_LEFT, true }, { KEY_DRIGHT, manual3ds::K_RIGHT, true },
+			{ KEY_L, manual3ds::K_L, false }, { KEY_R, manual3ds::K_R, false },
+			{ KEY_A, manual3ds::K_A, false }, { KEY_B, manual3ds::K_B, false },
+			{ KEY_START, manual3ds::K_START, false },
+		};
+		for (size_t i = 0; i < sizeof(map) / sizeof(map[0]); ++i)
+			if ((map[i].rep ? rep : down) & map[i].b) mi.down |= map[i].k;
+		if (down & KEY_TOUCH)
+		{
+			touchPosition tp;
+			hidTouchRead(&tp);
+			mi.touch_down = true;
+			mi.tx = tp.px - kTouchOffsetX;
+			mi.ty = tp.py - kTouchOffsetY;     // the 320x200 bottom half is centred
+		}
+		circlePosition cp;
+		hidCircleRead(&cp);
+		mi.cpad_y = cp.dy;
+		const bool wasDirty = g_manual.dirty();
+		if (!g_manual.update(mi)) break;
+		if (redraw || mi.down || mi.touch_down || wasDirty || g_manual.dirty())
+		{
+			g_manual.draw_top(top);
+			g_manual.draw_bottom(bot);
+			blitCanvas(scr, top, 0);
+			blitCanvas(scr, bot, half);
+			SDL_Flip(scr);
+			redraw = false;
+		}
+		else
+			gspWaitForVBlank();
+	}
+	// don't let the buttons that closed the manual reach the game
+	g_touchBlocked = (hidKeysHeld() & KEY_TOUCH) != 0;
+	SDL_PumpEvents();
+	SDL_Event ev;
+	while (SDL_PeepEvents(&ev, 1, SDL_GETEVENT, SDL_EVENTMASK(SDL_KEYDOWN) | SDL_EVENTMASK(SDL_KEYUP)
+	                      | SDL_EVENTMASK(SDL_MOUSEBUTTONDOWN) | SDL_EVENTMASK(SDL_MOUSEBUTTONUP)) > 0)
+		;
+	g_lastTick = 0;                            // no cursor jump from the long frame
+}
+}
+
 void openxcom3dsPumpInput()
 {
 	if (!g_padTried)
@@ -225,7 +328,11 @@ void openxcom3dsPumpInput()
 		SDL_JoystickEventState(SDL_IGNORE);
 	}
 	// touch screen, straight from the hardware
-	if (hidKeysHeld() & KEY_TOUCH)
+	if (g_touchBlocked)
+	{
+		if (!(hidKeysHeld() & KEY_TOUCH)) g_touchBlocked = false;
+	}
+	else if (hidKeysHeld() & KEY_TOUCH)
 	{
 		touchPosition tp;
 		hidTouchRead(&tp);
@@ -293,6 +400,12 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev)
 		const Ctx ctx = context(&st);
 		const SDLKey k = ev.key.keysym.sym;
 		const bool down = ev.type == SDL_KEYDOWN;
+		if (k == SDLK_RETURN && ev.key.which != kMark)
+		{
+			// Start = in-game manual (the keyboard's own Enter is tagged kMark)
+			if (down) runManual();
+			return false;
+		}
 		if (k == SDLK_a || (k == SDLK_b && ctx == CTX_BATTLE))
 		{
 			// A = left click at the cursor; B = right click in battle (turn unit)

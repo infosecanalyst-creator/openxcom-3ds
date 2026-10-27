@@ -209,7 +209,8 @@ rw(TE,
    "3DS keyboard: accept")
 
 os.makedirs(os.path.join(ROOT, "src", "3ds"), exist_ok=True)
-for f in ("platform3ds.h", "platform3ds.cpp", "scalers_stub.cpp", "topscreen3ds.h", "topscreen3ds.cpp", "mouse3ds.h"):
+for f in ("platform3ds.h", "platform3ds.cpp", "scalers_stub.cpp", "topscreen3ds.h", "topscreen3ds.cpp", "mouse3ds.h",
+          "manual3ds.h", "manual_text.h", "font6x13.h", "font6x13b.h"):
     shutil.copy(os.path.join(PORT, "3ds", f), os.path.join(ROOT, "src", "3ds", f))
     print("  + src/3ds/%-25s copied" % f)
 shutil.copy(os.path.join(PORT, "Makefile.3ds"), os.path.join(ROOT, "src", "Makefile.3ds"))

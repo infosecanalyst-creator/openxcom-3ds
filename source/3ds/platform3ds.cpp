@@ -275,6 +275,7 @@ void runManual()
 		manual3ds::Input mi;
 		static const struct { u32 b; uint32_t k; bool rep; } map[] = {
 			{ KEY_DUP, manual3ds::K_UP, true }, { KEY_DDOWN, manual3ds::K_DOWN, true },
+			{ KEY_CSTICK_UP, manual3ds::K_SCROLL_UP, true }, { KEY_CSTICK_DOWN, manual3ds::K_SCROLL_DOWN, true },
 			{ KEY_DLEFT, manual3ds::K_LEFT, true }, { KEY_DRIGHT, manual3ds::K_RIGHT, true },
 			{ KEY_L, manual3ds::K_L, false }, { KEY_R, manual3ds::K_R, false },
 			{ KEY_A, manual3ds::K_A, false }, { KEY_B, manual3ds::K_B, false },

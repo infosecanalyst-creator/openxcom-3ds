@@ -12,8 +12,8 @@ The game has two halves:
 Press Start at any time to open this manual. The game waits underneath.
 
 ## Using this manual
-- Circle Pad or D-pad up/down: scroll.
-- L / R or D-pad left/right: change section.
+- Circle Pad or C-Stick up/down: scroll the text (hold to keep scrolling).
+- D-Pad: move between the sections on the touch screen. L / R: previous / next section.
 - Tap a section on the touch screen to jump to it.
 - B, Start or Close: back to the game.
 

@@ -1,5 +1,7 @@
 # OpenXcom on the New 3DS — scope, measurements, scaffold
 
+> **Bring your own game files.** No game data is included: you need your own copy of *X-COM: UFO Defense* (GOG or Steam).
+
 **Verdict: feasible on the New 3DS, with real numbers behind it.**
 
 ## The measurement (the question this project hinged on)

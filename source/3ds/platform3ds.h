@@ -11,3 +11,10 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev); // false = swallow this event
 // save names). Returns false if the player cancelled.
 bool openxcom3dsKeyboard(const std::string &current, std::string &out);
 void openxcom3dsPostReturn();                // queue an Enter press for the game
+// Layout: true while the game is shown on the top screen (battle), and the
+// touch screen is the pad (topscreen3ds.cpp).
+bool openxcom3dsGameOnTop();
+void openxcom3dsToggleSwap();
+#include <SDL.h>
+void openxcom3dsSendKey(SDLKey key);         // press + release, passed to the game as is
+void openxcom3dsClickAt(int x, int y);       // left click at game coordinates

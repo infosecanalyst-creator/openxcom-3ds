@@ -42,6 +42,8 @@
 #include "../Savegame/Production.h"
 #include "../Savegame/ResearchProject.h"
 #include "../Battlescape/Pathfinding.h"
+#include "platform3ds.h"
+#include "click3ds.h"
 
 extern bool g_endTurnArmed3ds;   // platform3ds.cpp: X pressed once, waiting for confirm
 
@@ -317,7 +319,7 @@ static void drawBattle(Surface *top, SavedBattleGame *battle)
 	if (g_endTurnArmed3ds)
 		text(top, 4, 186, "Press X again to END TURN   (any other button cancels)", C_WARN);
 	else
-		text(top, 4, 186, "Tap: preview path, tap again: move   L/R soldier  X x2 end turn", C_DIM);
+		text(top, 4, 186, "Tap: path, tap again: move  L/R soldier  SELECT: game on top", C_DIM);
 }
 
 // ---- Geoscape / bases -----------------------------------------------------
@@ -387,7 +389,7 @@ static void drawStrategic(Surface *top, SavedGame *save)
 			cy += 9;
 		}
 	}
-	text(top, 4, 186, "L/R zoom  X intercept  Y bases  Start manual", C_DIM);
+	text(top, 4, 186, "L/R zoom  X intercept  Y bases  SELECT swap", C_DIM);
 }
 
 // ---- menus ----------------------------------------------------------------
@@ -406,9 +408,291 @@ static void drawMenu(Surface *top)
 		"Battle: tap to preview a path, tap",
 		"  again to move.  L/R soldier  Y kneel",
 		"  X twice: end turn   ZL/ZR level",
-		"Start: instruction manual",
+		"SELECT: swap screens   Start: manual",
 	};
 	for (int i = 0; i < 8; ++i, y += 12) text(top, 52, y, lines[i], C_TEXT);
+}
+
+// ---- the touch screen while the game is on the top screen -----------------
+// Battle: a close-up map around the camera (tap a square = click it in the
+// game: first tap previews the path, second tap moves; while aiming, tap the
+// target), the selected soldier, and the battle buttons. Elsewhere: the
+// strategic / menu panel and a SWAP button.
+struct PadBtn { int x, y, w, h; const char *label; int id; };
+enum PadId { P_NONE = 0, P_PREV, P_NEXT, P_KNEEL, P_INV, P_CENTER, P_MAP, P_UP, P_DOWN, P_LEFT, P_RIGHT,
+             P_MENU, P_END, P_SWAP };
+static PadBtn g_btn[16];
+static int g_nbtn = 0, g_flash = P_NONE;
+static Uint32 g_flashUntil = 0, g_endArmedAt = 0;
+static bool g_endArmed = false, g_dirty = true;
+// close-up map: n x n tiles from (g_mmTX, g_mmTY), cell px each, at (g_mmX, g_mmY)
+static const int kMmN = 18, kMmCell = 8;
+static int g_mmX = 3, g_mmY = 14, g_mmTX = 0, g_mmTY = 0, g_mmLevel = 0;
+static bool g_mmValid = false;
+static int g_mmFlashX = -1, g_mmFlashY = -1;
+
+void invalidate() { g_dirty = true; }
+
+static int textWidth(const std::string &s)
+{
+	if (!g_text) return 0;
+	g_text->setSmall();
+	g_text->setText(s);
+	g_text->clear();
+	g_text->draw();
+	SDL_Surface *src = g_text->getSurface();
+	int maxx = -1;
+	for (int yy = 0; yy < src->h; ++yy)
+	{
+		const Uint8 *sp = (const Uint8 *)src->pixels + yy * src->pitch;
+		for (int xx = 0; xx < src->w; ++xx) if (sp[xx] && xx > maxx) maxx = xx;
+	}
+	return maxx + 1;
+}
+
+static void addBtn(int x, int y, int w, int h, const char *label, int id)
+{
+	if (g_nbtn < 16) { PadBtn b = { x, y, w, h, label, id }; g_btn[g_nbtn++] = b; }
+}
+
+static void drawButtons(Surface *top)
+{
+	const Uint32 now = SDL_GetTicks();
+	for (int i = 0; i < g_nbtn; ++i)
+	{
+		const PadBtn &b = g_btn[i];
+		const bool down = b.id == g_flash && now < g_flashUntil;
+		const bool warn = b.id == P_END && g_endArmed;
+		rect(top, b.x, b.y, b.w, b.h, down ? C_TITLE : C_FRAME);
+		rect(top, b.x + 1, b.y + 1, b.w - 2, b.h - 2, down ? C_TITLE : warn ? C_BAD : C_PANEL);
+		if (down)   // pushed in: shadow on the top and left edges
+		{
+			rect(top, b.x + 1, b.y + 1, b.w - 2, 1, C_BG);
+			rect(top, b.x + 1, b.y + 1, 1, b.h - 2, C_BG);
+		}
+		const char *label = warn ? "Confirm" : b.label;
+		const int tw = textWidth(label), push = down ? 1 : 0;
+		text(top, b.x + (b.w - tw) / 2 + push, b.y + (b.h - 9) / 2 + push, label, down ? C_BG : C_TEXT, false, b.w - 2);
+	}
+}
+
+static void drawCloseMap(Surface *top, SavedBattleGame *battle)
+{
+	const int w = kMmN * kMmCell;
+	rect(top, g_mmX - 1, g_mmY - 1, w + 2, w + 2, C_FRAME);
+	rect(top, g_mmX, g_mmY, w, w, C_BG);
+	g_mmValid = false;
+	BattlescapeState *bs = battle->getBattleState();
+	if (!bs || !bs->getMap() || !bs->getMap()->getCamera()) return;
+	Camera *cam = bs->getMap()->getCamera();
+	const Position c = cam->getCenterPosition();
+	const int mx = battle->getMapSizeX(), my = battle->getMapSizeY();
+	g_mmLevel = cam->getViewLevel();
+	g_mmTX = std::max(0, std::min(mx - kMmN, c.x - kMmN / 2));
+	g_mmTY = std::max(0, std::min(my - kMmN, c.y - kMmN / 2));
+	if (mx < kMmN) g_mmTX = 0;
+	if (my < kMmN) g_mmTY = 0;
+	g_mmValid = true;
+	for (int lvl = 0; lvl <= g_mmLevel; ++lvl)
+		for (int ty = 0; ty < kMmN; ++ty)
+			for (int tx = 0; tx < kMmN; ++tx)
+			{
+				Tile *t = battle->getTile(Position(g_mmTX + tx, g_mmTY + ty, lvl));
+				if (!t || !t->isDiscovered(2)) continue;
+				const int px = g_mmX + tx * kMmCell, py = g_mmY + ty * kMmCell;
+				if (t->getMapData(O_FLOOR)) rect(top, px, py, kMmCell, kMmCell, C_FRAME);
+				if (t->getMapData(O_OBJECT)) rect(top, px + 1, py + 1, kMmCell - 2, kMmCell - 2, C_DIM);
+				if (t->getMapData(O_WESTWALL)) rect(top, px, py, 2, kMmCell, C_TEXT);
+				if (t->getMapData(O_NORTHWALL)) rect(top, px, py, kMmCell, 2, C_TEXT);
+			}
+	// path preview
+	BattleUnit *sel = battle->getSelectedUnit();
+	const bool blink = (SDL_GetTicks() / 300) & 1;
+	for (std::vector<BattleUnit*>::iterator i = battle->getUnits()->begin(); i != battle->getUnits()->end(); ++i)
+	{
+		BattleUnit *u = *i;
+		if (u->isOut()) continue;
+		const Position p = u->getPosition();
+		const int tx = p.x - g_mmTX, ty = p.y - g_mmTY;
+		if (tx < 0 || ty < 0 || tx >= kMmN || ty >= kMmN) continue;
+		Col col;
+		if (u->getFaction() == FACTION_PLAYER) col = (u == sel && blink) ? C_TEXT : C_GOOD;
+		else if (u->getFaction() == FACTION_HOSTILE) { if (!u->getVisible()) continue; col = C_BAD; }
+		else { if (!u->getVisible()) continue; col = C_TITLE; }
+		rect(top, g_mmX + tx * kMmCell + 1, g_mmY + ty * kMmCell + 1, kMmCell - 2, kMmCell - 2, col);
+		if (u == sel) rect(top, g_mmX + tx * kMmCell + 3, g_mmY + ty * kMmCell + 3, 2, 2, C_BG);
+	}
+	if (g_mmFlashX >= 0 && SDL_GetTicks() < g_flashUntil)
+	{
+		const int px = g_mmX + g_mmFlashX * kMmCell, py = g_mmY + g_mmFlashY * kMmCell;
+		rect(top, px, py, kMmCell, 1, C_TITLE); rect(top, px, py + kMmCell - 1, kMmCell, 1, C_TITLE);
+		rect(top, px, py, 1, kMmCell, C_TITLE); rect(top, px + kMmCell - 1, py, 1, kMmCell, C_TITLE);
+	}
+	text(top, g_mmX + 2, g_mmY + w - 10, str("Level %d", g_mmLevel + 1), C_DIM);
+}
+
+static void drawBattlePad(Surface *top, SavedBattleGame *battle)
+{
+	const bool playerTurn = battle->getSide() == FACTION_PLAYER;
+	text(top, 3, 2, str("TURN %d", battle->getTurn()), C_TITLE);
+	text(top, 50, 2, playerTurn ? "X-COM" : (battle->getSide() == FACTION_HOSTILE ? "ALIENS" : "CIVILIANS"),
+	     playerTurn ? C_GOOD : C_BAD);
+	const int enemies = visibleEnemies(battle);
+	text(top, 100, 2, enemies ? str("%d alien(s) in sight", enemies) : std::string("No aliens in sight"), enemies ? C_BAD : C_DIM);
+	drawCloseMap(top, battle);
+
+	// the selected soldier, right of the map
+	const int rx = 152, rw = 166;
+	frame(top, rx - 2, 13, rw + 2, 146);
+	BattleUnit *u = battle->getSelectedUnit();
+	if (!u || u->getFaction() != FACTION_PLAYER)
+		text(top, rx + 2, 18, playerTurn ? "No soldier selected" : "Enemy movement...", C_DIM, false, rw - 4);
+	else
+	{
+		UnitStats *st = u->getBaseStats();
+		text(top, rx + 2, 15, u->getName(g_game->getLanguage()), C_TEXT, true, rw - 4);
+		std::string rank = u->getRankString();
+		if (!rank.empty()) text(top, rx + 2, 31, tr(rank), C_DIM, false, 90);
+		if (u->isKneeled()) text(top, rx + 100, 31, "KNEELING", C_WARN);
+		bar(top, rx + 2, 42, rw - 4, "TU", u->getTimeUnits(), st->tu, C_GOOD);
+		bar(top, rx + 2, 51, rw - 4, "Health", u->getHealth(), st->health, u->getFatalWounds() ? C_BAD : C_GOOD);
+		bar(top, rx + 2, 60, rw - 4, "Energy", u->getEnergy(), st->stamina, C_WARN);
+		bar(top, rx + 2, 69, rw - 4, "Morale", u->getMorale(), 100, C_BLUE);
+		Pathfinding *pf = battle->getPathfinding();
+		if (pf && pf->isPathPreviewed())
+		{
+			const int cost = pf->getTotalTUCost();
+			text(top, rx + 2, 79, str("Move: %d TU, tap again", cost), cost <= u->getTimeUnits() ? C_GOOD : C_BAD, false, rw - 4);
+		}
+		else if (u->getFatalWounds())
+			text(top, rx + 2, 79, str("FATAL WOUNDS: %d", u->getFatalWounds()), C_BAD);
+		BattleItem *r = u->getItem("STR_RIGHT_HAND"), *l = u->getItem("STR_LEFT_HAND");
+		text(top, rx + 2, 90, "R:", C_DIM);
+		text(top, rx + 14, 90, itemLine(r), C_TEXT, false, rw - 16);
+		text(top, rx + 2, 99, "L:", C_DIM);
+		text(top, rx + 14, 99, itemLine(l), C_TEXT, false, rw - 16);
+		// accuracy / TU for the main weapon's shots
+		BattleItem *wpn = (r && r->getRules()) ? r : l;
+		if (wpn && wpn->getRules())
+		{
+			RuleItem *ru = wpn->getRules();
+			struct M { BattleActionType t; const char *n; int tu; };
+			const M modes[3] = { { BA_SNAPSHOT, "Snap", ru->getTUSnap() }, { BA_AIMEDSHOT, "Aimed", ru->getTUAimed() },
+			                     { BA_AUTOSHOT, "Auto", ru->getTUAuto() } };
+			int y = 110;
+			for (int i = 0; i < 3; ++i)
+			{
+				if (modes[i].tu <= 0) continue;
+				const int acc = u->getFiringAccuracy(modes[i].t, wpn), tu = u->getActionTUs(modes[i].t, wpn);
+				text(top, rx + 2, y, std::string(modes[i].n) + str(" %d%%", acc) + str("  %d TU", tu),
+				     tu <= u->getTimeUnits() ? C_GOOD : C_DIM, false, rw - 4);
+				y += 9;
+			}
+		}
+		text(top, rx + 2, 146, "Tap map: path; again: go", C_DIM, false, rw - 4);
+	}
+
+	// battle buttons: two rows of six
+	g_nbtn = 0;
+	static const struct { const char *l; int id; } row1[6] = {
+		{ "Prev", P_PREV }, { "Next", P_NEXT }, { "Kneel", P_KNEEL }, { "Inventory", P_INV }, { "Center", P_CENTER }, { "Map", P_MAP } };
+	static const struct { const char *l; int id; } row2[6] = {
+		{ "Level up", P_UP }, { "Level dn", P_DOWN }, { "L hand", P_LEFT }, { "R hand", P_RIGHT }, { "Swap", P_SWAP }, { "End turn", P_END } };
+	const int bw = 52, gap = 1, x0 = 2;
+	for (int i = 0; i < 6; ++i)
+	{
+		addBtn(x0 + i * (bw + gap), 162, bw, 17, row1[i].l, row1[i].id);
+		addBtn(x0 + i * (bw + gap), 181, bw, 17, row2[i].l, row2[i].id);
+	}
+	drawButtons(top);
+}
+
+// Tap on the touch screen while the game is on top; x, y in 320x200 space.
+bool padTap(Game *game, int x, int y)
+{
+	g_dirty = true;
+	for (int i = 0; i < g_nbtn; ++i)
+	{
+		const PadBtn &b = g_btn[i];
+		if (x < b.x || y < b.y || x >= b.x + b.w || y >= b.y + b.h) continue;
+		click3ds::play();
+		g_flash = b.id; g_flashUntil = SDL_GetTicks() + 150;
+		if (b.id != P_END) g_endArmed = false;
+		switch (b.id)
+		{
+		case P_PREV:   openxcom3dsSendKey(Options::keyBattlePrevUnit); break;
+		case P_NEXT:   openxcom3dsSendKey(Options::keyBattleNextUnit); break;
+		case P_KNEEL:  openxcom3dsSendKey(Options::keyBattleKneel); break;
+		case P_INV:    openxcom3dsSendKey(Options::keyBattleInventory); break;
+		case P_CENTER: openxcom3dsSendKey(Options::keyBattleCenterUnit); break;
+		case P_MAP:    openxcom3dsSendKey(Options::keyBattleMap); break;
+		case P_UP:     openxcom3dsSendKey(Options::keyBattleLevelUp); break;
+		case P_DOWN:   openxcom3dsSendKey(Options::keyBattleLevelDown); break;
+		case P_LEFT:   openxcom3dsSendKey(Options::keyBattleUseLeftHand); break;
+		case P_RIGHT:  openxcom3dsSendKey(Options::keyBattleUseRightHand); break;
+		case P_SWAP:   openxcom3dsToggleSwap(); break;
+		case P_END:
+			if (g_endArmed && SDL_GetTicks() - g_endArmedAt < 3000)
+			{
+				g_endArmed = false;
+				openxcom3dsSendKey(Options::keyBattleEndTurn);
+			}
+			else
+			{
+				g_endArmed = true;
+				g_endArmedAt = SDL_GetTicks();
+			}
+			break;
+		default: break;
+		}
+		return true;
+	}
+	// the close-up map: click that square in the game
+	SavedGame *save = game ? game->getSavedGame() : 0;
+	SavedBattleGame *battle = save ? save->getSavedBattle() : 0;
+	const int w = kMmN * kMmCell;
+	if (battle && g_mmValid && x >= g_mmX && y >= g_mmY && x < g_mmX + w && y < g_mmY + w)
+	{
+		BattlescapeState *bs = battle->getBattleState();
+		if (!bs || !bs->getMap() || !bs->getMap()->getCamera()) return true;
+		Camera *cam = bs->getMap()->getCamera();
+		const int tx = (x - g_mmX) / kMmCell, ty = (y - g_mmY) / kMmCell;
+		const Position target(g_mmTX + tx, g_mmTY + ty, g_mmLevel);
+		if (target.x >= battle->getMapSizeX() || target.y >= battle->getMapSizeY()) return true;
+		click3ds::play();
+		g_mmFlashX = tx; g_mmFlashY = ty; g_flash = P_NONE; g_flashUntil = SDL_GetTicks() + 200;
+		g_endArmed = false;
+		// bring the square into view, then find a screen point the game maps to it
+		cam->centerOnPosition(target, true);
+		Position sp;
+		cam->convertMapToScreen(target, &sp);
+		const Position off = cam->getMapOffset();
+		sp.x += off.x; sp.y += off.y;
+		int bestx = -1, besty = -1, bestd = 1 << 30;
+		for (int dy = 0; dy < 40; ++dy)
+			for (int dx = 0; dx < 32; ++dx)
+			{
+				int mx2, my2;
+				const int px = sp.x + dx, py = sp.y + dy;
+				if (px < 0 || py < 0 || px >= 320 || py >= 140) continue;   // keep off the HUD
+				cam->convertScreenToMap(px, py, &mx2, &my2);
+				if (mx2 != target.x || my2 != target.y) continue;
+				const int d = (dx - 16) * (dx - 16) + (dy - 24) * (dy - 24);
+				if (d < bestd) { bestd = d; bestx = px; besty = py; }
+			}
+		if (bestx >= 0) openxcom3dsClickAt(bestx, besty);
+		return true;
+	}
+	return false;
+}
+
+static void drawOtherPad(Surface *top, SavedGame *save)
+{
+	if (save) drawStrategic(top, save); else drawMenu(top);
+	rect(top, 0, 180, W, 20, C_BG);
+	g_nbtn = 0;
+	addBtn(110, 181, 100, 17, "Swap screens", P_SWAP);
+	drawButtons(top);
 }
 
 void render(Game *game, Surface *top)
@@ -416,8 +700,11 @@ void render(Game *game, Surface *top)
 	if (!game || !top) return;
 	static Uint32 last = 0;
 	const Uint32 now = SDL_GetTicks();
-	if (now - last < 100 && last) return;    // 10 Hz is plenty for a status panel
+	if (g_endArmed && now - g_endArmedAt >= 3000) { g_endArmed = false; g_dirty = true; }
+	if (g_flash != P_NONE && now >= g_flashUntil) { g_flash = P_NONE; g_dirty = true; }
+	if (now - last < 100 && last && !g_dirty) return;    // 10 Hz is plenty for a status panel
 	last = now;
+	g_dirty = false;
 
 	g_game = game;
 	Mod *mod = game->getMod();
@@ -437,6 +724,13 @@ void render(Game *game, Surface *top)
 
 	top->clear(0);
 	SavedGame *save = game->getSavedGame();
+	if (openxcom3dsGameOnTop())      // this surface is the touch screen: the pad
+	{
+		if (save && save->getSavedBattle()) drawBattlePad(top, save->getSavedBattle());
+		else drawOtherPad(top, save);
+		return;
+	}
+	g_nbtn = 0;
 	if (save && save->getSavedBattle()) drawBattle(top, save->getSavedBattle());
 	else if (save) drawStrategic(top, save);
 	else drawMenu(top);

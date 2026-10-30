@@ -210,9 +210,31 @@ rw(TE,
 
 os.makedirs(os.path.join(ROOT, "src", "3ds"), exist_ok=True)
 for f in ("platform3ds.h", "platform3ds.cpp", "scalers_stub.cpp", "topscreen3ds.h", "topscreen3ds.cpp", "mouse3ds.h",
-          "manual3ds.h", "manual_text.h", "font6x13.h", "font6x13b.h"):
+          "manual3ds.h", "click3ds.h", "manual_text.h", "font6x13.h", "font6x13b.h"):
     shutil.copy(os.path.join(PORT, "3ds", f), os.path.join(ROOT, "src", "3ds", f))
     print("  + src/3ds/%-25s copied" % f)
 shutil.copy(os.path.join(PORT, "Makefile.3ds"), os.path.join(ROOT, "src", "Makefile.3ds"))
 print("  + src/Makefile.3ds                 copied")
+print("done")
+
+# --------------------------------------------- game on the top screen (battle)
+# In battle the game moves to the top screen and the touch screen shows the
+# battle pad (3ds/topscreen3ds.cpp: close-up map to tap, soldier, buttons);
+# everywhere else the game stays on the touch screen. SELECT swaps.
+rw(SC,
+   '#include "Screen.h"\n',
+   '#include "Screen.h"\n#ifdef __3DS__\n#include "../3ds/platform3ds.h"\n#endif\n',
+   '#include "../3ds/platform3ds.h"')
+rw(SC,
+   "\t\tif (_top3ds && _top3ds->getWidth() == _surface->getWidth())\n\t\t\tSDL_BlitSurface(_top3ds->getSurface(), 0, _screen, 0); // top screen: info panel\n\t\telse\n\t\t\tSDL_BlitSurface(_surface->getSurface(), 0, _screen, 0);\n\t\tSDL_Rect lower = { 0, (Sint16)_baseHeight, 0, 0 };\n\t\tSDL_BlitSurface(_surface->getSurface(), 0, _screen, &lower); // bottom (touch) screen: the game\n",
+   "\t\tSDL_Rect lower = { 0, (Sint16)_baseHeight, 0, 0 };\n"
+   "\t\tconst bool panel = _top3ds && _top3ds->getWidth() == _surface->getWidth();\n"
+   "\t\tif (panel && openxcom3dsGameOnTop())\n\t\t{\n"
+   "\t\t\tSDL_BlitSurface(_surface->getSurface(), 0, _screen, 0);       // top screen: the game\n"
+   "\t\t\tSDL_BlitSurface(_top3ds->getSurface(), 0, _screen, &lower);   // touch screen: the battle pad\n"
+   "\t\t}\n\t\telse\n\t\t{\n"
+   "\t\t\tSDL_BlitSurface(panel ? _top3ds->getSurface() : _surface->getSurface(), 0, _screen, 0); // top: info panel\n"
+   "\t\t\tSDL_BlitSurface(_surface->getSurface(), 0, _screen, &lower); // touch screen: the game\n"
+   "\t\t}\n",
+   "touch screen: the battle pad")
 print("done")

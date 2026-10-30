@@ -21,6 +21,7 @@
 #include "../Interface/ComboBox.h"
 #include "../Battlescape/BattlescapeState.h"
 #include "../Geoscape/GeoscapeState.h"
+#include "topscreen3ds.h"
 
 // yaml-cpp's ruleset parsing is deeply recursive; give the main thread a
 // 4 MB stack instead of libctru's 32 KB default.
@@ -115,9 +116,12 @@ float g_cx = kGameW / 2, g_cy = kGameH / 2;   // cursor, game space
 Uint32 g_lastTick = 0;
 Uint8 g_buttons = 0;                          // SDL_BUTTON masks currently held
 bool g_touching = false;
+bool g_padTouch = false;                      // stylus down on the pad (game on top)
+bool g_userFlip = false;                      // SELECT / Swap: flip the automatic layout
+int g_lastAutoTop = -1;
 const Uint8 kMark = 0x3D;                     // "which" tag on events we post
-// touch -> game space: the game is drawn 1:1, centred vertically (y 20..219)
-const int kTouchOffsetX = 0, kTouchOffsetY = 20;
+// touch -> game space: each 320x200 half is drawn 1:1, centred (y 20..219)
+inline int touchToGameY(int py) { return py - 20; }
 
 void postMotion(int dx, int dy)
 {
@@ -219,6 +223,7 @@ void remap(SDL_Event &ev, Ctx ctx)
 // Runs its own little loop while open, so the game (and Geoscape time) waits
 // underneath. Text on the top screen, section buttons on the touch screen.
 #include "manual3ds.h"
+#include "click3ds.h"
 #include "manual_text.h"
 namespace
 {
@@ -288,14 +293,15 @@ void runManual()
 			touchPosition tp;
 			hidTouchRead(&tp);
 			mi.touch_down = true;
-			mi.tx = tp.px - kTouchOffsetX;
-			mi.ty = tp.py - kTouchOffsetY;     // the 320x200 bottom half is centred
+			mi.tx = tp.px;
+			mi.ty = touchToGameY(tp.py);       // the 320x200 bottom half is centred
 		}
 		circlePosition cp;
 		hidCircleRead(&cp);
 		mi.cpad_y = cp.dy;
 		const bool wasDirty = g_manual.dirty();
 		if (!g_manual.update(mi)) break;
+		if (g_manual.take_click()) click3ds::play();   // standard: every tap clicks
 		if (redraw || mi.down || mi.touch_down || wasDirty || g_manual.dirty())
 		{
 			g_manual.draw_top(top);
@@ -333,13 +339,25 @@ void openxcom3dsPumpInput()
 	{
 		if (!(hidKeysHeld() & KEY_TOUCH)) g_touchBlocked = false;
 	}
+	else if (g_padTouch)
+	{
+		// game on the top screen: the touch screen is the pad (one action per tap)
+		if (!(hidKeysHeld() & KEY_TOUCH)) g_padTouch = false;
+	}
+	else if (!g_touching && (hidKeysDown() & KEY_TOUCH) && openxcom3dsGameOnTop())
+	{
+		touchPosition tp;
+		hidTouchRead(&tp);
+		g_padTouch = true;
+		OpenXcom::TopScreen3DS::padTap(OpenXcom::State::game3ds(), tp.px, touchToGameY(tp.py));
+	}
 	else if (hidKeysHeld() & KEY_TOUCH)
 	{
 		touchPosition tp;
 		hidTouchRead(&tp);
 		if (tp.px || tp.py)
 		{
-			moveCursor((float)(tp.px - kTouchOffsetX), (float)(tp.py - kTouchOffsetY));
+			moveCursor((float)tp.px, (float)touchToGameY(tp.py));
 			if (!g_touching) { g_touching = true; postButton(SDL_BUTTON_LEFT, true); }
 		}
 	}
@@ -401,6 +419,14 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev)
 		const Ctx ctx = context(&st);
 		const SDLKey k = ev.key.keysym.sym;
 		const bool down = ev.type == SDL_KEYDOWN;
+		if (ev.key.which == kMark && (k != SDLK_UP && k != SDLK_DOWN && k != SDLK_LEFT && k != SDLK_RIGHT))
+			return true;                       // keys sent by the pad / keyboard: as they are
+		if (k == SDLK_ESCAPE)
+		{
+			// SELECT: game on the top screen <-> on the touch screen
+			if (down) openxcom3dsToggleSwap();
+			return false;
+		}
 		if (k == SDLK_RETURN && ev.key.which != kMark)
 		{
 			// Start = in-game manual (the keyboard's own Enter is tagged kMark)
@@ -445,6 +471,52 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev)
 		return true;
 	}
 }
+// Battle (the main battlescape view): game on the top screen, the battle pad
+// on the touch screen. Everything else (Geoscape, bases, inventory, menus,
+// popups): game on the touch screen for the stylus. SELECT flips it until the
+// next change between the two.
+bool openxcom3dsGameOnTop()
+{
+	const bool autoTop = context(0) == CTX_BATTLE;
+	if ((int)autoTop != g_lastAutoTop)
+	{
+		g_lastAutoTop = autoTop;
+		g_userFlip = false;
+		OpenXcom::TopScreen3DS::invalidate();
+	}
+	return autoTop != g_userFlip;
+}
+
+void openxcom3dsToggleSwap()
+{
+	g_userFlip = !g_userFlip;
+	g_padTouch = (hidKeysHeld() & KEY_TOUCH) != 0;   // a tap that swapped is not a game click
+	if (g_buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) postButton(SDL_BUTTON_LEFT, false);
+	g_touching = false;
+	click3ds::play();
+	OpenXcom::TopScreen3DS::invalidate();
+}
+
+void openxcom3dsSendKey(SDLKey key)
+{
+	for (int i = 0; i < 2; ++i)
+	{
+		SDL_Event e; memset(&e, 0, sizeof(e));
+		e.type = i == 0 ? SDL_KEYDOWN : SDL_KEYUP;
+		e.key.state = i == 0 ? SDL_PRESSED : SDL_RELEASED;
+		e.key.which = kMark;
+		e.key.keysym.sym = key;
+		SDL_PushEvent(&e);
+	}
+}
+
+void openxcom3dsClickAt(int x, int y)
+{
+	moveCursor((float)x, (float)y);
+	postButton(SDL_BUTTON_LEFT, true);
+	postButton(SDL_BUTTON_LEFT, false);
+}
+
 extern "C" Uint8 openxcom3dsGetMouseState(int *x, int *y)
 {
 	if (x) *x = (int)g_cx;

@@ -16,14 +16,19 @@ Press Start at any time to open this manual. The game waits underneath.
 - B, Start or Close: back to the game.
 
 # The two screens
-## Bottom screen (touch)
-The game itself, exactly as on a PC. Tap it with the stylus as if it were a mouse.
+## In battle
+The battle is on the top screen. The touch screen is the battle pad:
+- Left: a close-up map around the camera. Tap a square to click it in the battle: the first tap shows the path and its TU cost, a second tap on the same square moves there. While aiming, tap the target.
+- Right: the selected soldier: TU, health, energy, morale, weapons, and the accuracy and TU of each shot.
+- Buttons: Prev / Next soldier, Kneel, Inventory, Center, Map, Level up / down, L hand / R hand (fire, throw, use), Swap, End turn (tap twice).
+Circle Pad and A also work on the top screen: move the cursor, A clicks, B turns the soldier.
+Windows that need the stylus (inventory, the fire-mode menu, messages) come down to the touch screen by themselves and go back up when they close.
 
-## Top screen (information)
-The top screen shows what you would otherwise have to open a window for. It changes with what you are doing:
-- Battle: the selected soldier's time units, energy, health and morale; stats; weapons and fire modes; the whole squad; a minimap of the current level.
-- Geoscape and bases: date, time and funds; UFOs on radar; research and manufacture in progress; each base's staff and craft.
-- Menus: a summary of the controls.
+## Geoscape, bases and menus
+The game is on the touch screen: tap it with the stylus as if it were a mouse. The top screen shows what you would otherwise open a window for: date, funds, UFOs on radar, research and manufacture, each base's staff and craft.
+
+## SELECT: swap
+SELECT (or the Swap button) puts the game on the other screen, at any time.
 
 # Touch and cursor
 - Tap: left click where you tap.
@@ -48,7 +53,7 @@ When a name field opens (a new base, a soldier, a save), the 3DS keyboard appear
 | X twice | Battle: end turn
 | Y | Globe: bases. Battle: kneel
 | ZL / ZR | Battle: view level down / up
-| Select | Cancel (Esc)
+| Select | Swap screens
 | Start | Open this manual
 
 # Starting a campaign

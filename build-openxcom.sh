@@ -24,7 +24,8 @@ LOG=$PWD/openxcom-build.log; : > "$LOG"
 
   # 3. X-COM data from Steam into the data folder (baked into romfs)
   SRC="/c/Program Files (x86)/Steam/steamapps/common/XCom UFO Defense/XCOM"
-  if [ -d "$SRC/GEODATA" ]; then
+  # only with BAKE_DATA=1: a .3dsx with the data built in must never be shared
+  if [ "${BAKE_DATA:-0}" = 1 ] && [ -d "$SRC/GEODATA" ]; then
     for d in GEODATA GEOGRAPH MAPS ROUTES SOUND TERRAIN UFOGRAPH UFOINTRO UNITS; do
       [ -d OpenXcom/bin/UFO/$d ] || cp -r "$SRC/$d" OpenXcom/bin/UFO/
     done

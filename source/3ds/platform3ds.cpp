@@ -253,7 +253,7 @@ void runManual()
 {
 	if (!g_manualLoaded)
 	{
-		g_manual.load(kManualText, "sdmc:/3ds/openxcom/manual.txt", "X-COM for 3DS: manual");
+		g_manual.load(kManualText, "sdmc:/3ds/openxcom/manual.txt", "OpenXcom for 3DS: manual");
 		g_manualLoaded = true;
 	}
 	SDL_Surface *scr = SDL_GetVideoSurface();

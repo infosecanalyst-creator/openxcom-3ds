@@ -1,5 +1,5 @@
 # Welcome
-X-COM: UFO Defense (OpenXcom) on the New 3DS.
+OpenXcom, the open-source engine for X-COM: UFO Defense, on the New 3DS (unofficial port; you supply the game files).
 
 Aliens are visiting Earth. You run X-COM, a secret organisation funded by the world's nations. Shoot down UFOs, raid the crash sites, study what you recover, and turn alien technology against them.
 
@@ -158,7 +158,7 @@ Saves live in sdmc:/3ds/openxcom/user/ on the SD card.
 - Keep at least one interceptor at each base that has radar.
 
 # Troubleshooting
-- Game data: the original X-COM folders (GEODATA, MAPS, UFOGRAPH and the rest) go in sdmc:/3ds/openxcom/UFO/ unless they were built in.
+- Game data: the original X-COM folders (GEODATA, MAPS, UFOGRAPH and the rest) go in sdmc:/3ds/openxcom/UFO/ (or are built in, if you built it yourself with BAKE_DATA=1).
 - Options reset: delete sdmc:/3ds/openxcom/user/options.cfg and restart.
 - Cursor stuck: touch the screen once; the cursor jumps to the stylus.
 - No music: the 3DS cannot play MIDI. The AdLib soundtrack needs 16-bit audio, which is the default.

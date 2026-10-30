@@ -27,7 +27,6 @@ Estimate for the 3DS build: **~50–60 MB in a Battlescape**. The New 3DS
 gives an app 124 MB. Comfortable. The Old 3DS's 64 MB is too tight to
 promise.
 
-Screens from the headless run are in `docs/`.
 
 ## Two findings that make the port simpler than expected
 
@@ -47,7 +46,7 @@ Screens from the headless run are in `docs/`.
 | `source/3ds/platform3ds.*` | romfs/SD setup, New 3DS clock, first-run `options.cfg` (400×240, native audio, no intro) |
 | `source/Makefile.3ds` | cross build (based on upstream `Makefile.simple`; no CMake toolchain fight) |
 | `tools/build-portlibs.sh` | cross-builds the two deps devkitPro doesn't ship: SDL_gfx and yaml-cpp |
-| `Dockerfile`, `build-3ds.sh` | one-shot build; data in `./xcom-data/` is baked into romfs |
+| `Dockerfile`, `build-3ds.sh` | one-shot build (game data is loaded from the SD card; `BAKE_DATA=1` builds it in) |
 | `tools/measure_memory.py`, `tools/sdl_click_shim.c` | the headless measurement rig (desktop) |
 | `patches/openxcom-3ds-reference.diff` | the resulting upstream diff, for reference |
 
@@ -55,13 +54,17 @@ Screens from the headless run are in `docs/`.
 
 ```powershell
 docker build -t openxcom-3ds .          # ~15 min: image + SDL_gfx + yaml-cpp for ARM
-mkdir xcom-data; copy the GEODATA GEOGRAPH MAPS ROUTES SOUND TERRAIN UFOGRAPH UNITS folders in
 docker run --rm -v "${PWD}:/work" openxcom-3ds ./build-3ds.sh
 ```
 
-`out/3ds/openxcom/openxcom.3dsx` → `sdmc:/3ds/openxcom/`. Saves and
-`options.cfg` live in `sdmc:/3ds/openxcom/user/`. If you'd rather not bake
-the data in, put the X-COM folders in `sdmc:/3ds/openxcom/UFO/` instead.
+`out/3ds/openxcom/openxcom.3dsx` → `sdmc:/3ds/openxcom/`, and copy the GEODATA
+GEOGRAPH MAPS ROUTES SOUND TERRAIN UFOGRAPH UNITS folders from your own copy of the
+game to `sdmc:/3ds/openxcom/UFO/`. Saves and `options.cfg` live in
+`sdmc:/3ds/openxcom/user/`.
+
+To build the data into the `.3dsx` instead, put the folders in `./xcom-data/` and run
+with `-e BAKE_DATA=1`. **That file then contains the game itself: keep it on your own
+3DS and never upload or share it.**
 
 ## Screen layout and controls (DS rule)
 
@@ -118,3 +121,15 @@ go out, so that's where a second-surface blit would hook in. Stereoscopic
 depth per map level (the Battlescape is already drawn level by level in
 `Map::drawTerrain`) is the natural 3D feature, same layered technique as
 the Micropolis and DCSS ports.
+
+## Licence
+
+GPL-3.0-or-later, the same as OpenXcom; the full text is in [`COPYING`](COPYING). The
+build downloads OpenXcom and applies `tools/patch_openxcom.py`;
+`patches/openxcom-3ds-reference.diff` shows every change made to it.
+
+## Disclaimer
+
+Not affiliated with or endorsed by the OpenXcom project, Firaxis, 2K, Take-Two,
+MicroProse or Nintendo. *X-COM* and *UFO Defense* are trademarks of their owners and
+are used here only to say which game files the engine reads. No game data is included.

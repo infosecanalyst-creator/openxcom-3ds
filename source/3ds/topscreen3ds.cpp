@@ -395,8 +395,8 @@ static void drawStrategic(Surface *top, SavedGame *save)
 // ---- menus ----------------------------------------------------------------
 static void drawMenu(Surface *top)
 {
-	const std::string title = "X-COM: UFO DEFENSE";
-	text(top, 84, 30, title, C_TITLE, true);
+	const std::string title = "OPENXCOM";
+	text(top, 128, 30, title, C_TITLE, true);
 	text(top, 104, 50, "OpenXcom for New 3DS", C_DIM);
 	frame(top, 40, 72, 240, 102);
 	int y = 80;

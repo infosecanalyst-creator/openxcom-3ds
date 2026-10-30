@@ -39,7 +39,7 @@ $(BIN).elf: $(OBJS)
 	$(CXX) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
 
 $(BIN).smdh: ../res/linux/icons/openxcom_48x48.png
-	smdhtool --create "OpenXcom" "X-COM: UFO Defense, open-source engine" "OpenXcom / 3DS port" $< $@
+	smdhtool --create "OpenXcom" "Open-source engine; needs your own game data" "OpenXcom 3DS port (unofficial)" $< $@
 
 ../romfs:
 	@mkdir -p ../romfs && cp -r ../bin/common ../bin/standard ../romfs/

@@ -164,7 +164,7 @@ rw(SC,
 rw(SC,
    "\telse\n\t{\n\t\tSDL_BlitSurface(_surface->getSurface(), 0, _screen, 0);\n#ifdef __3DS__\n\t\tSDL_Rect lower = { 0, (Sint16)_baseHeight, 0, 0 };\n\t\tSDL_BlitSurface(_surface->getSurface(), 0, _screen, &lower); // bottom (touch) screen copy\n#endif\n\t}\n",
    "\telse\n\t{\n#ifdef __3DS__\n\t\tif (_top3ds && _top3ds->getWidth() == _surface->getWidth())\n\t\t\tSDL_BlitSurface(_top3ds->getSurface(), 0, _screen, 0); // top screen: info panel\n\t\telse\n\t\t\tSDL_BlitSurface(_surface->getSurface(), 0, _screen, 0);\n\t\tSDL_Rect lower = { 0, (Sint16)_baseHeight, 0, 0 };\n\t\tSDL_BlitSurface(_surface->getSurface(), 0, _screen, &lower); // bottom (touch) screen: the game\n#else\n\t\tSDL_BlitSurface(_surface->getSurface(), 0, _screen, 0);\n#endif\n\t}\n",
-   "// top screen: info panel")
+   "_top3ds->getSurface(), 0, _screen")  # also true after the battle-pad flip below
 STH = "src/Engine/State.h"
 rw(STH,
    "public:\n\t/// Creates a new state linked to a game.\n",

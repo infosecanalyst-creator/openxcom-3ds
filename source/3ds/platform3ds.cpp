@@ -22,6 +22,8 @@
 #include "../Battlescape/BattlescapeState.h"
 #include "../Geoscape/GeoscapeState.h"
 #include "topscreen3ds.h"
+#include "../Engine/Logger.h"
+#include <typeinfo>
 
 // yaml-cpp's ruleset parsing is deeply recursive; give the main thread a
 // 4 MB stack instead of libctru's 32 KB default.
@@ -134,6 +136,13 @@ void postMotion(int dx, int dy)
 void postButton(Uint8 button, bool down)
 {
 	if (down) g_buttons |= SDL_BUTTON(button); else g_buttons &= ~SDL_BUTTON(button);
+	if (down)
+	{
+		OpenXcom::Game *g = OpenXcom::State::game3ds();
+		OpenXcom::State *st = g ? g->getTopState3ds() : 0;
+		OpenXcom::Logger().get(OpenXcom::LOG_INFO) << "3ds click " << (int)button << " at " << (int)g_cx << "," << (int)g_cy
+		              << " state " << (st ? typeid(*st).name() : "-");
+	}
 	SDL_Event e; memset(&e, 0, sizeof(e));
 	e.type = down ? SDL_MOUSEBUTTONDOWN : SDL_MOUSEBUTTONUP;
 	e.button.which = kMark; e.button.button = button; e.button.state = down ? SDL_PRESSED : SDL_RELEASED;
@@ -419,6 +428,10 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev)
 		const Ctx ctx = context(&st);
 		const SDLKey k = ev.key.keysym.sym;
 		const bool down = ev.type == SDL_KEYDOWN;
+		if (down) // diagnostics (stuck-screen report): what each button press meets
+			OpenXcom::Logger().get(OpenXcom::LOG_INFO) << "3ds key " << (int)k << (ev.key.which == kMark ? " (pad)" : "")
+			              << " ctx " << (int)ctx << " state " << (st ? typeid(*st).name() : "-")
+			              << " gameOnTop " << openxcom3dsGameOnTop();
 		if (ev.key.which == kMark && (k != SDLK_UP && k != SDLK_DOWN && k != SDLK_LEFT && k != SDLK_RIGHT))
 			return true;                       // keys sent by the pad / keyboard: as they are
 		if (k == SDLK_ESCAPE)
@@ -475,6 +488,11 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev)
 // on the touch screen. Everything else (Geoscape, bases, inventory, menus,
 // popups): game on the touch screen for the stylus. SELECT flips it until the
 // next change between the two.
+void openxcom3dsBeforeFlip()
+{
+	gspWaitForVBlank();
+}
+
 bool openxcom3dsGameOnTop()
 {
 	const bool autoTop = context(0) == CTX_BATTLE;

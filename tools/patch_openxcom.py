@@ -238,3 +238,10 @@ rw(SC,
    "\t\t}\n",
    "touch screen: the battle pad")
 print("done")
+
+# ------------------------------------------ flicker: sync with the GPU per flip
+rw(SC,
+   "\tif (SDL_Flip(_screen) == -1)\n",
+   "#ifdef __3DS__\n\topenxcom3dsBeforeFlip();\n#endif\n\tif (SDL_Flip(_screen) == -1)\n",
+   "openxcom3dsBeforeFlip();")
+print("done")

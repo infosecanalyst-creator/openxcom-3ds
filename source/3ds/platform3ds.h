@@ -14,6 +14,9 @@ void openxcom3dsPostReturn();                // queue an Enter press for the gam
 // Layout: true while the game is shown on the top screen (battle), and the
 // touch screen is the pad (topscreen3ds.cpp).
 bool openxcom3dsGameOnTop();
+// Screen::flip, before SDL_Flip: wait for the GPU to finish the last frame
+// (3ds-sdl's render thread reads the texture the next flip overwrites).
+void openxcom3dsBeforeFlip();
 void openxcom3dsToggleSwap();
 #include <SDL.h>
 void openxcom3dsSendKey(SDLKey key);         // press + release, passed to the game as is

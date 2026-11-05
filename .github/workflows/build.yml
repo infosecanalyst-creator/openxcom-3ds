@@ -1,0 +1,33 @@
+name: build-3dsx
+# Builds openxcom.3dsx in the repository's own Docker image and publishes it (with the build
+# log) to the `builds` branch, for emulator testing and Wi-Fi install without a local build.
+on:
+  push:
+    branches: ["**", "!builds"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the image
+        run: docker build -t openxcom-3ds .
+      - name: Build
+        run: docker run --rm -v "$PWD:/work" openxcom-3ds ./build-3ds.sh 2>&1 | tee build.log; test -f out/3ds/openxcom/openxcom.3dsx
+      - name: Collect
+        if: always()
+        run: |
+          mkdir -p pub
+          cp out/3ds/openxcom/openxcom.3dsx build.log build-3ds.log pub/ 2>/dev/null || true
+          echo "$GITHUB_SHA" > pub/SOURCE_COMMIT
+          rm -rf out && mv pub out
+      - name: Publish to builds branch
+        if: always()
+        run: |
+          cd out
+          git init -q -b builds
+          git config user.name "build-bot"; git config user.email "build-bot@users.noreply.github.com"
+          git add -A; git commit -qm "build of ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" builds

@@ -13,14 +13,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build the image
-        run: docker build -t openxcom-3ds .
+        run: docker build -t openxcom-3ds . 2>&1 | tee image.log; test ${PIPESTATUS[0]} -eq 0
+        shell: bash
       - name: Build
         run: docker run --rm -v "$PWD:/work" openxcom-3ds ./build-3ds.sh 2>&1 | tee build.log; test -f out/3ds/openxcom/openxcom.3dsx
       - name: Collect
         if: always()
         run: |
           mkdir -p pub
-          cp out/3ds/openxcom/openxcom.3dsx build.log build-3ds.log pub/ 2>/dev/null || true
+          cp out/3ds/openxcom/openxcom.3dsx build.log build-3ds.log image.log pub/ 2>/dev/null || true
           echo "$GITHUB_SHA" > pub/SOURCE_COMMIT
           rm -rf out && mv pub out
       - name: Publish to builds branch

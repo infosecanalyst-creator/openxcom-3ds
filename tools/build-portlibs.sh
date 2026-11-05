@@ -8,8 +8,19 @@ source "$DEVKITPRO/3dsvars.sh"   # sets CC/CXX/CFLAGS/PKG_CONFIG for the 3DS
 WORK="$(mktemp -d)"; cd "$WORK"
 
 # SDL_gfx 2.0.26 (C, autotools)
-curl -L -o sdlgfx.tgz https://sourceforge.net/projects/sdlgfx/files/SDL_gfx-2.0.26.tar.gz/download
-tar xzf sdlgfx.tgz && cd SDL_gfx-2.0.26
+# SourceForge's "/download" page can answer with HTML, so try several mirrors and keep the first
+# one that really is a gzip archive.
+got=0
+for url in \
+    https://www.ferzkopp.net/Software/SDL_gfx-2.0/SDL_gfx-2.0.26.tar.gz \
+    https://deb.debian.org/debian/pool/main/s/sdl-gfx/sdl-gfx_2.0.26.orig.tar.gz \
+    https://downloads.sourceforge.net/project/sdlgfx/SDL_gfx-2.0.26.tar.gz \
+    https://sourceforge.net/projects/sdlgfx/files/SDL_gfx-2.0.26.tar.gz/download; do
+  echo "== trying $url"
+  if curl -fL --retry 2 -o sdlgfx.tgz "$url" && gzip -t sdlgfx.tgz 2>/dev/null; then got=1; break; fi
+done
+[ "$got" = 1 ] || { echo "could not download SDL_gfx 2.0.26 from any mirror" >&2; exit 1; }
+mkdir sdlgfx-src && tar xzf sdlgfx.tgz -C sdlgfx-src --strip-components=1 && cd sdlgfx-src
 ./configure --prefix="$PORTLIBS" --host=arm-none-eabi --disable-shared --enable-static --disable-mmx \
             --with-sdl-prefix="$PORTLIBS"
 make -j"$(nproc)" && make install

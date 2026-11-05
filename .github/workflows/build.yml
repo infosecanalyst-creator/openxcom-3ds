@@ -23,7 +23,7 @@ jobs:
           mkdir -p pub
           cp out/3ds/openxcom/openxcom.3dsx build.log build-3ds.log image.log pub/ 2>/dev/null || true
           echo "$GITHUB_SHA" > pub/SOURCE_COMMIT
-          rm -rf out && mv pub out
+          sudo chown -R "$USER" out || true; rm -rf out && mv pub out
       - name: Publish to builds branch
         if: always()
         run: |

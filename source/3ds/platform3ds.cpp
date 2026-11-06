@@ -445,7 +445,7 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev)
 			static Uint32 zrAt = 0;
 			if (down) { zrAt = SDL_GetTicks(); return false; }
 			ev.type = SDL_KEYDOWN; ev.key.state = SDL_PRESSED;
-			k = (SDL_GetTicks() - zrAt >= 350) ? OpenXcom::Options::keyBattleLevelDown : OpenXcom::Options::keyBattleLevelUp;
+			ev.key.keysym.sym = (SDL_GetTicks() - zrAt >= 350) ? OpenXcom::Options::keyBattleLevelDown : OpenXcom::Options::keyBattleLevelUp;
 			return true;
 		}
 		if (k == SDLK_RETURN && ev.key.which != kMark)

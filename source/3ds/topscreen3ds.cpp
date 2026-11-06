@@ -319,7 +319,7 @@ static void drawBattle(Surface *top, SavedBattleGame *battle)
 	if (g_endTurnArmed3ds)
 		text(top, 4, 186, "Press X again to END TURN   (any other button cancels)", C_WARN);
 	else
-		text(top, 4, 186, "Tap: path, tap again: move  L/R soldier  SELECT: game on top", C_DIM);
+		text(top, 4, 186, "Tap: path, tap again: move  L/R soldier  ZL: game on top", C_DIM);
 }
 
 // ---- Geoscape / bases -----------------------------------------------------
@@ -389,7 +389,7 @@ static void drawStrategic(Surface *top, SavedGame *save)
 			cy += 9;
 		}
 	}
-	text(top, 4, 186, "L/R zoom  X intercept  Y bases  SELECT swap", C_DIM);
+	text(top, 4, 186, "L/R zoom  X intercept  Y bases  ZL swap", C_DIM);
 }
 
 // ---- menus ----------------------------------------------------------------
@@ -407,8 +407,8 @@ static void drawMenu(Surface *top)
 		"C-stick: scroll map / globe",
 		"Battle: tap to preview a path, tap",
 		"  again to move.  L/R soldier  Y kneel",
-		"  X twice: end turn   ZL/ZR level",
-		"SELECT: swap screens   Start: manual",
+		"  X twice: end turn   ZR level (hold: down)",
+		"ZL or SELECT: swap screens   Start: manual",
 	};
 	for (int i = 0; i < 8; ++i, y += 12) text(top, 52, y, lines[i], C_TEXT);
 }

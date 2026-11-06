@@ -29,8 +29,8 @@ Windows that need the stylus (inventory, the fire-mode menu, messages) come down
 ## Geoscape, bases and menus
 The game is on the touch screen: tap it with the stylus as if it were a mouse. The top screen shows what you would otherwise open a window for: date, funds, UFOs on radar, research and manufacture, each base's staff and craft.
 
-## SELECT: swap
-SELECT (or the Swap button) puts the game on the other screen, at any time.
+## ZL: swap
+ZL (or SELECT, or the Swap button) puts the game on the other screen, at any time.
 
 # Touch and cursor
 - Tap: left click where you tap.
@@ -54,7 +54,8 @@ When a name field opens (a new base, a soldier, a save), the 3DS keyboard appear
 | X | Globe: intercept
 | X twice | Battle: end turn
 | Y | Globe: bases. Battle: kneel
-| ZL / ZR | Battle: view level down / up
+| ZR | Battle: view level up (hold: down)
+| ZL | Swap the screens
 | Select | Swap screens
 | Start | Open this manual
 

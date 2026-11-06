@@ -90,9 +90,10 @@ the bottom; both are 1:1 pixels (no stretching).
 | L / R | - | zoom out / in | previous / next soldier |
 | X | - | intercept | end turn (press twice) |
 | Y | - | bases | kneel |
-| ZL / ZR | - | - | view level down / up |
+| ZR | - | - | view level up (tap) / down (hold) |
+| ZL | swap screens | swap screens | swap screens |
 | Start | instruction manual | instruction manual | instruction manual |
-| Select | cancel (Esc) | options (Esc) | menu (Esc) |
+| Select | swap screens (same as ZL) | swap screens | swap screens |
 
 Input notes: 3ds-sdl's own touch-to-mouse events are dropped (in dual-screen
 mode it clamps the touch position to the top half). The touch screen is read

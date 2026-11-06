@@ -215,8 +215,6 @@ void remap(SDL_Event &ev, Ctx ctx)
 		if (k == SDLK_l) k = OpenXcom::Options::keyBattlePrevUnit;
 		else if (k == SDLK_r) k = OpenXcom::Options::keyBattleNextUnit;
 		else if (k == SDLK_y) k = OpenXcom::Options::keyBattleKneel;
-		else if (k == SDLK_LSHIFT) k = OpenXcom::Options::keyBattleLevelDown;
-		else if (k == SDLK_RSHIFT) k = OpenXcom::Options::keyBattleLevelUp;
 	}
 	else if (ctx == CTX_GEOSCAPE)
 	{
@@ -434,11 +432,21 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev)
 			              << " gameOnTop " << openxcom3dsGameOnTop();
 		if (ev.key.which == kMark && (k != SDLK_UP && k != SDLK_DOWN && k != SDLK_LEFT && k != SDLK_RIGHT))
 			return true;                       // keys sent by the pad / keyboard: as they are
-		if (k == SDLK_ESCAPE)
+		if (k == SDLK_ESCAPE || k == SDLK_LSHIFT)
 		{
-			// SELECT: game on the top screen <-> on the touch screen
+			// SELECT or ZL: game on the top screen <-> on the touch screen
 			if (down) openxcom3dsToggleSwap();
 			return false;
+		}
+		if (k == SDLK_RSHIFT && ctx == CTX_BATTLE)
+		{
+			// ZR: tap = view level up, hold (0.35 s) = level down. Decided on release, and sent
+			// to the game as one key press
+			static Uint32 zrAt = 0;
+			if (down) { zrAt = SDL_GetTicks(); return false; }
+			ev.type = SDL_KEYDOWN; ev.key.state = SDL_PRESSED;
+			k = (SDL_GetTicks() - zrAt >= 350) ? OpenXcom::Options::keyBattleLevelDown : OpenXcom::Options::keyBattleLevelUp;
+			return true;
 		}
 		if (k == SDLK_RETURN && ev.key.which != kMark)
 		{

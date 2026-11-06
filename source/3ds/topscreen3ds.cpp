@@ -407,8 +407,8 @@ static void drawMenu(Surface *top)
 		"C-stick: scroll map / globe",
 		"Battle: tap to preview a path, tap",
 		"  again to move.  L/R soldier  Y kneel",
-		"  X twice: end turn   ZR level (hold: down)",
-		"ZL or SELECT: swap screens   Start: manual",
+		"  X twice: end turn   ZR level",
+		"ZL: swap screens   Start: manual",
 	};
 	for (int i = 0; i < 8; ++i, y += 12) text(top, 52, y, lines[i], C_TEXT);
 }

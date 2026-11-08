@@ -122,6 +122,7 @@ bool g_padTouch = false;                      // stylus down on the pad (game on
 bool g_userFlip = false;                      // SELECT / Swap: flip the automatic layout
 int g_lastAutoTop = -1;
 const Uint8 kMark = 0x3D;                     // "which" tag on events we post
+const Uint8 kPad = 0x3E;                      // tag on pad-button keys we generate from the HID state
 // touch -> game space: each 320x200 half is drawn 1:1, centred (y 20..219)
 inline int touchToGameY(int py) { return py - 20; }
 
@@ -393,6 +394,28 @@ void openxcom3dsPumpInput()
 			}
 		g_cstickPrev = held;
 	}
+	// Pad buttons: read from the HID state here instead of relying on 3ds-sdl's own key
+	// events (in Azahar none of them arrived, so ZL/START/A/B did nothing). Tagged kPad;
+	// translateEvent treats them as ordinary button keys and drops the library's copies.
+	{
+		static const struct { u32 bit; SDLKey key; } pm[] = {
+			{ KEY_A, SDLK_a }, { KEY_B, SDLK_b }, { KEY_X, SDLK_x }, { KEY_Y, SDLK_y },
+			{ KEY_L, SDLK_l }, { KEY_R, SDLK_r }, { KEY_START, SDLK_RETURN }, { KEY_SELECT, SDLK_ESCAPE },
+			{ KEY_ZL, SDLK_LSHIFT }, { KEY_ZR, SDLK_RSHIFT },
+			{ KEY_DUP, SDLK_UP }, { KEY_DDOWN, SDLK_DOWN }, { KEY_DLEFT, SDLK_LEFT }, { KEY_DRIGHT, SDLK_RIGHT } };
+		const u32 kd = hidKeysDown(), ku = hidKeysUp();
+		for (size_t i = 0; i < sizeof(pm) / sizeof(pm[0]); ++i)
+			for (int up = 0; up < 2; ++up)
+				if ((up ? ku : kd) & pm[i].bit)
+				{
+					SDL_Event e; memset(&e, 0, sizeof(e));
+					e.type = up ? SDL_KEYUP : SDL_KEYDOWN;
+					e.key.state = up ? SDL_RELEASED : SDL_PRESSED;
+					e.key.which = kPad;
+					e.key.keysym.sym = pm[i].key;
+					SDL_PushEvent(&e);
+				}
+	}
 	if (g_endTurnArmed3ds && SDL_GetTicks() - g_endTurnArmedAt > 2500) g_endTurnArmed3ds = false;
 
 	const Uint32 now = SDL_GetTicks();
@@ -426,6 +449,11 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev)
 		const Ctx ctx = context(&st);
 		const SDLKey k = ev.key.keysym.sym;
 		const bool down = ev.type == SDL_KEYDOWN;
+		if (ev.key.which == kPad) ev.key.which = 0;            // generated from the HID state: a plain button key
+		else if (ev.key.which == 0 && (k == SDLK_a || k == SDLK_b || k == SDLK_x || k == SDLK_y || k == SDLK_l || k == SDLK_r
+		         || k == SDLK_RETURN || k == SDLK_ESCAPE || k == SDLK_LSHIFT || k == SDLK_RSHIFT
+		         || k == SDLK_UP || k == SDLK_DOWN || k == SDLK_LEFT || k == SDLK_RIGHT))
+			return false;                                      // 3ds-sdl's copy of a button we already generate
 		if (down) // diagnostics (stuck-screen report): what each button press meets
 			OpenXcom::Logger().get(OpenXcom::LOG_INFO) << "3ds key " << (int)k << (ev.key.which == kMark ? " (pad)" : "")
 			              << " ctx " << (int)ctx << " state " << (st ? typeid(*st).name() : "-")

@@ -35,6 +35,9 @@ ZL (or SELECT, or the Swap button) puts the game on the other screen, at any tim
 ## Sharp top screen
 With the 3D slider all the way down, the top screen runs in its high-resolution mode, so text there is sharper. The port has no 3D picture; moving the slider up switches back to the normal mode.
 
+## Left-handed play
+Open the manual (Start) and tap Left hand: on / off at the bottom. The D-Pad and the A/B/X/Y buttons swap jobs: Y does what D-Pad up did, A what right did, B what down did, X what left did, and the reverse. Your choice is remembered, and the manual follows the same swap.
+
 # Touch and cursor
 - Tap: left click where you tap.
 - Circle Pad: moves the mouse cursor. Push gently for fine movement, fully for speed.

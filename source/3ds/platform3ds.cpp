@@ -281,8 +281,40 @@ void blitCanvas(SDL_Surface *scr, const manual3ds::Canvas &cv, int y0)
 	if (SDL_MUSTLOCK(scr)) SDL_UnlockSurface(scr);
 }
 
+// Left-handed play: the D-Pad and the A/B/X/Y face buttons swap roles. Persisted by a marker file.
+static const char *kLeftyPath = "sdmc:/3ds/openxcom/.lefty";
+static bool g_lefty = false, g_leftyLoaded = false;
+static void loadLefty()
+{
+	struct stat sb;
+	g_lefty = stat(kLeftyPath, &sb) == 0;
+	g_leftyLoaded = true;
+}
+static void setLefty(bool on)
+{
+	g_lefty = on;
+	if (on) { if (FILE *f = fopen(kLeftyPath, "w")) fclose(f); }
+	else remove(kLeftyPath);
+}
+static u32 remapKeys(u32 m)
+{
+	if (!g_lefty) return m;
+	static const struct { u32 a, b; } pairs[] = {
+		{ KEY_Y, KEY_DUP }, { KEY_A, KEY_DRIGHT }, { KEY_B, KEY_DDOWN }, { KEY_X, KEY_DLEFT } };
+	u32 r = m;
+	for (size_t i = 0; i < sizeof(pairs) / sizeof(pairs[0]); ++i)
+		r &= ~(pairs[i].a | pairs[i].b);
+	for (size_t i = 0; i < sizeof(pairs) / sizeof(pairs[0]); ++i)
+	{
+		if (m & pairs[i].a) r |= pairs[i].b;
+		if (m & pairs[i].b) r |= pairs[i].a;
+	}
+	return r;
+}
+
 void runManual()
 {
+	if (!g_leftyLoaded) loadLefty();
 	if (!g_manualLoaded)
 	{
 		g_manual.load(kManualText, "sdmc:/3ds/openxcom/manual.txt", "OpenXcom for 3DS: manual");
@@ -310,8 +342,9 @@ void runManual()
 	while (aptMainLoop())
 	{
 		hidScanInput();
-		const u32 down = hidKeysDown(), rep = hidKeysDownRepeat();
+		const u32 down = remapKeys(hidKeysDown()), rep = remapKeys(hidKeysDownRepeat());
 		manual3ds::Input mi;
+		g_manual.set_toggle(g_lefty ? "Left hand: on" : "Left hand: off");
 		static const struct { u32 b; uint32_t k; bool rep; } map[] = {
 			{ KEY_DUP, manual3ds::K_UP, true }, { KEY_DDOWN, manual3ds::K_DOWN, true },
 			{ KEY_CSTICK_UP, manual3ds::K_SCROLL_UP, true }, { KEY_CSTICK_DOWN, manual3ds::K_SCROLL_DOWN, true },
@@ -335,6 +368,7 @@ void runManual()
 		mi.cpad_y = cp.dy;
 		const bool wasDirty = g_manual.dirty();
 		if (!g_manual.update(mi)) break;
+		if (g_manual.take_toggle()) { setLefty(!g_lefty); redraw = true; }
 		if (g_manual.take_click()) click3ds::play();   // standard: every tap clicks
 		if (redraw || mi.down || mi.touch_down || wasDirty || g_manual.dirty())
 		{
@@ -455,7 +489,8 @@ void openxcom3dsPumpInput()
 			{ KEY_L, SDLK_l }, { KEY_R, SDLK_r }, { KEY_START, SDLK_RETURN }, { KEY_SELECT, SDLK_ESCAPE },
 			{ KEY_ZL, SDLK_LSHIFT }, { KEY_ZR, SDLK_RSHIFT },
 			{ KEY_DUP, SDLK_UP }, { KEY_DDOWN, SDLK_DOWN }, { KEY_DLEFT, SDLK_LEFT }, { KEY_DRIGHT, SDLK_RIGHT } };
-		const u32 kd = hidKeysDown(), ku = hidKeysUp();
+		if (!g_leftyLoaded) loadLefty();
+		const u32 kd = remapKeys(hidKeysDown()), ku = remapKeys(hidKeysUp());
 		for (size_t i = 0; i < sizeof(pm) / sizeof(pm[0]); ++i)
 			for (int up = 0; up < 2; ++up)
 				if ((up ? ku : kd) & pm[i].bit)

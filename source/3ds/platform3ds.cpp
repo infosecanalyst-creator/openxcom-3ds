@@ -296,7 +296,7 @@ static void setLefty(bool on)
 	if (on) { if (FILE *f = fopen(kLeftyPath, "w")) fclose(f); }
 	else remove(kLeftyPath);
 }
-bool openxcom3dsLefty() { if (!g_leftyLoaded) loadLefty(); return g_lefty; }
+bool leftyQuery() { if (!g_leftyLoaded) loadLefty(); return g_lefty; }
 static u32 remapKeys(u32 m)
 {
 	if (!g_lefty) return m;
@@ -814,6 +814,8 @@ extern "C" void openxcom3dsWarpMouse(Uint16 x, Uint16 y)
 {
 	moveCursor(x, y);
 }
+// Left-handed mode for the top-screen dashboard (topscreen3ds.cpp).
+bool openxcom3dsLefty() { return leftyQuery(); }
 #endif
 
 // ---------------------------------------------------------------------------

@@ -716,8 +716,8 @@ void openxcom3dsPresent(SDL_Surface *scr, bool gameOnTop, bool ring)
 	const bool wantWide = osGet3DSliderState() <= 0.0f;
 	if (wantWide != gfxIsWide())              // libctru's own state (survives the HOME menu)
 	{
-		gfxSetWide(wantWide);
-		gfxSet3D(false);
+		// libctru keeps 3D and wide in one setting (gfxTopMode): each call replaces the other, so call only the wanted one
+		if (wantWide) gfxSetWide(true); else gfxSet3D(false);
 	}
 	if (SDL_MUSTLOCK(scr)) SDL_LockSurface(scr);
 	if (ring) drawFocusRing(scr, gameOnTop ? 0 : kGameH);

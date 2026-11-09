@@ -14,10 +14,12 @@ void openxcom3dsPostReturn();                // queue an Enter press for the gam
 // Layout: true while the game is shown on the top screen (battle), and the
 // touch screen is the pad (topscreen3ds.cpp).
 bool openxcom3dsGameOnTop();
-// Screen::flip, before SDL_Flip: wait for the GPU to finish the last frame
-// (3ds-sdl's render thread reads the texture the next flip overwrites).
-void openxcom3dsBeforeFlip();
 void openxcom3dsToggleSwap();
 #include <SDL.h>
 void openxcom3dsSendKey(SDLKey key);         // press + release, passed to the game as is
 void openxcom3dsClickAt(int x, int y);       // left click at game coordinates
+// Screen::flip, in place of SDL_Flip: puts the 320x400 frame (rows 0-199 top screen, 200-399 touch
+// screen) on both screens. The top screen is drawn in its 800x240 wide mode while the 3D slider is
+// at 0. gameOnTop: rows 0-199 are the game, stretched to fill the top screen; otherwise they are
+// the info panel, 1:1. ring: draw the D-pad focus ring around the menu button under the cursor.
+void openxcom3dsPresent(SDL_Surface *scr, bool gameOnTop, bool ring = true);

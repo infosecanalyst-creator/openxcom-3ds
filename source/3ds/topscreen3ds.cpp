@@ -393,7 +393,7 @@ static void drawStrategic(Surface *top, SavedGame *save)
 }
 
 // ---- menus ----------------------------------------------------------------
-static void drawMenu(Surface *top)
+static void drawMenu(Surface *top, bool pad = false)
 {
 	const std::string title = "OPENXCOM";
 	text(top, 128, 30, title, C_TITLE, true);
@@ -401,9 +401,9 @@ static void drawMenu(Surface *top)
 	frame(top, 40, 72, 240, 102);
 	int y = 80;
 	const char *lines[] = {
-		"Tap the bottom screen: click",
+		pad ? "Touch screen: a touchpad for the game" : "Tap the bottom screen: click",
 		"Circle Pad cursor   A click   B back",
-		"D-pad: jump between buttons",
+		"D-pad: gold ring jumps to buttons",
 		"C-stick: scroll map / globe",
 		"Battle: tap to preview a path, tap",
 		"  again to move.  L/R soldier  Y kneel",
@@ -589,7 +589,8 @@ static void drawBattlePad(Surface *top, SavedBattleGame *battle)
 				y += 9;
 			}
 		}
-		text(top, rx + 2, 146, "Tap map: path; again: go", C_DIM, false, rw - 4);
+		text(top, rx + 2, 137, "Tap map square: click it", C_DIM, false, rw - 4);
+		text(top, rx + 2, 146, "Slide: pointer  Tap: click", C_DIM, false, rw - 4);
 	}
 
 	// battle buttons: two rows of six
@@ -607,10 +608,10 @@ static void drawBattlePad(Surface *top, SavedBattleGame *battle)
 	drawButtons(top);
 }
 
-// Tap on the touch screen while the game is on top; x, y in 320x200 space.
-bool padTap(Game *game, int x, int y)
+// Stylus down on the touch screen while the game is on top (x, y in 320x200 space): presses the
+// pad button there, if any. Everywhere else the touch screen is a touchpad (platform3ds.cpp).
+bool padButton(int x, int y)
 {
-	g_dirty = true;
 	for (int i = 0; i < g_nbtn; ++i)
 	{
 		const PadBtn &b = g_btn[i];
@@ -645,13 +646,24 @@ bool padTap(Game *game, int x, int y)
 			break;
 		default: break;
 		}
+		g_dirty = true;
 		return true;
 	}
-	// the close-up map: click that square in the game
+	return false;
+}
+
+bool onCloseMap(int x, int y)
+{
+	const int w = kMmN * kMmCell;
+	return g_mmValid && x >= g_mmX && y >= g_mmY && x < g_mmX + w && y < g_mmY + w;
+}
+
+// A short tap (no slide) on the close-up map: click that square in the game.
+bool mapTap(Game *game, int x, int y)
+{
 	SavedGame *save = game ? game->getSavedGame() : 0;
 	SavedBattleGame *battle = save ? save->getSavedBattle() : 0;
-	const int w = kMmN * kMmCell;
-	if (battle && g_mmValid && x >= g_mmX && y >= g_mmY && x < g_mmX + w && y < g_mmY + w)
+	if (battle && onCloseMap(x, y))
 	{
 		BattlescapeState *bs = battle->getBattleState();
 		if (!bs || !bs->getMap() || !bs->getMap()->getCamera()) return true;
@@ -681,6 +693,7 @@ bool padTap(Game *game, int x, int y)
 				if (d < bestd) { bestd = d; bestx = px; besty = py; }
 			}
 		if (bestx >= 0) openxcom3dsClickAt(bestx, besty);
+		g_dirty = true;
 		return true;
 	}
 	return false;
@@ -688,8 +701,12 @@ bool padTap(Game *game, int x, int y)
 
 static void drawOtherPad(Surface *top, SavedGame *save)
 {
-	if (save) drawStrategic(top, save); else drawMenu(top);
+	if (save) drawStrategic(top, save); else drawMenu(top, true);
 	rect(top, 0, 180, W, 20, C_BG);
+	// the rest of the touch screen is a touchpad for the game on the top screen
+	text(top, 4, 185, "Slide: pointer", C_DIM);
+	text(top, 214, 185, "Tap: click  R+tap: right", C_DIM);
+	g_mmValid = false;
 	g_nbtn = 0;
 	addBtn(110, 181, 100, 17, "Swap screens", P_SWAP);
 	drawButtons(top);
@@ -731,6 +748,7 @@ void render(Game *game, Surface *top)
 		return;
 	}
 	g_nbtn = 0;
+	g_mmValid = false;
 	if (save && save->getSavedBattle()) drawBattle(top, save->getSavedBattle());
 	else if (save) drawStrategic(top, save);
 	else drawMenu(top);

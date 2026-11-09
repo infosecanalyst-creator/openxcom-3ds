@@ -23,31 +23,39 @@ The battle is on the top screen. The touch screen is the battle pad:
 - Left: a close-up map around the camera. Tap a square to click it in the battle: the first tap shows the path and its TU cost, a second tap on the same square moves there. While aiming, tap the target.
 - Right: the selected soldier: TU, health, energy, morale, weapons, and the accuracy and TU of each shot.
 - Buttons: Prev / Next soldier, Kneel, Inventory, Center, Map, Level up / down, L hand / R hand (fire, throw, use), Swap, End turn (tap twice).
+- The rest of the touch screen is also a touchpad for the cursor on the top screen: slide anywhere except the buttons to move the cursor (like a laptop's touchpad). A quick tap outside the map clicks where the cursor points; hold R while you tap for a right click (turns the soldier).
 Circle Pad and A also work on the top screen: move the cursor, A clicks, B turns the soldier.
+The battle fills the whole top screen.
 Windows that need the stylus (inventory, the fire-mode menu, messages) come down to the touch screen by themselves and go back up when they close.
 
 ## Geoscape, bases and menus
 The game is on the touch screen: tap it with the stylus as if it were a mouse. The top screen shows what you would otherwise open a window for: date, funds, UFOs on radar, research and manufacture, each base's staff and craft.
 
 ## ZL: swap
-ZL (or SELECT, or the Swap button) puts the game on the other screen, at any time.
+ZL (or SELECT, or the Swap button) puts the game on the other screen, at any time. The game then fills the top screen, and the touch screen (apart from its Swap button) is a touchpad: slide to move the cursor, tap to click where it points, hold R and tap for a right click. While the game is on top, R does its own job (next soldier, zoom in) when you let go of it, unless you tapped with it.
+
+## Sharp top screen
+With the 3D slider all the way down, the top screen runs in its high-resolution mode, so text there is sharper. The port has no 3D picture; moving the slider up switches back to the normal mode.
 
 # Touch and cursor
 - Tap: left click where you tap.
 - Circle Pad: moves the mouse cursor. Push gently for fine movement, fully for speed.
 - A: left click at the cursor.
 - B: back / cancel. In battle, B is a right click, which turns the soldier to face the cursor.
-- D-pad in menus: jumps the cursor to the nearest button in that direction, then press A.
+- D-pad in menus: moves a gold ring to the nearest button in that direction (the cursor goes with it); A presses the button in the ring. This works on whichever screen the game is on.
+- Game on the top screen: the touch screen is a touchpad. Slide to move the cursor, tap to click, R + tap to right click.
 
 ## Typing names
 When a name field opens (a new base, a soldier, a save), the 3DS keyboard appears. Type the name and press OK; the game accepts it for you.
 
 # Buttons
 | Touch | Click (left mouse)
+| Touch, game on top | Touchpad: slide, tap
+| R + tap, game on top | Right click
 | Circle Pad | Move the cursor
 | A | Click at the cursor
 | B | Back; right click in battle
-| D-pad | Menus: jump between buttons
+| D-pad | Menus: gold ring to buttons
 | C-stick | Scroll the map / rotate globe
 | L / R | Globe: zoom out / in
 | L / R | Battle: previous / next soldier
@@ -163,7 +171,7 @@ Saves live in sdmc:/3ds/openxcom/user/ on the SD card.
 # Troubleshooting
 - Game data: the original X-COM folders (GEODATA, MAPS, UFOGRAPH and the rest) go in sdmc:/3ds/openxcom/UFO/ (or are built in, if you built it yourself with BAKE_DATA=1).
 - Options reset: delete sdmc:/3ds/openxcom/user/options.cfg and restart.
-- Cursor stuck: touch the screen once; the cursor jumps to the stylus.
+- Cursor stuck: touch the screen once; the cursor jumps to the stylus (with the game on top, slide on the touch screen).
 - No music: the 3DS cannot play MIDI. The AdLib soundtrack needs 16-bit audio, which is the default.
 - Replace this manual: put your own manual.txt in sdmc:/3ds/openxcom/.
 )MANUAL";

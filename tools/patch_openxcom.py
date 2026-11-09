@@ -239,9 +239,13 @@ rw(SC,
    "touch screen: the battle pad")
 print("done")
 
-# ------------------------------------------ flicker: sync with the GPU per flip
+# ------------------------------------- the port presents the frame itself (no SDL_Flip)
+# 3ds-sdl centres each 320x200 half 1:1 with side bars and has no 800-wide top mode; the port
+# writes both screens itself (3ds/platform3ds.cpp): wide top screen with the 3D slider at 0, the
+# game filling the top screen when it is there, the D-pad focus ring in menus.
 rw(SC,
-   "\tif (SDL_Flip(_screen) == -1)\n",
-   "#ifdef __3DS__\n\topenxcom3dsBeforeFlip();\n#endif\n\tif (SDL_Flip(_screen) == -1)\n",
-   "openxcom3dsBeforeFlip();")
+   "\tif (SDL_Flip(_screen) == -1)\n\t{\n\t\tthrow Exception(SDL_GetError());\n\t}\n",
+   "#ifdef __3DS__\n\topenxcom3dsPresent(_screen, _top3ds && openxcom3dsGameOnTop()); // the port's own presenter\n#else\n"
+   "\tif (SDL_Flip(_screen) == -1)\n\t{\n\t\tthrow Exception(SDL_GetError());\n\t}\n#endif\n",
+   "openxcom3dsPresent(_screen")
 print("done")

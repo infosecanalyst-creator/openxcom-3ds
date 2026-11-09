@@ -118,7 +118,19 @@ float g_cx = kGameW / 2, g_cy = kGameH / 2;   // cursor, game space
 Uint32 g_lastTick = 0;
 Uint8 g_buttons = 0;                          // SDL_BUTTON masks currently held
 bool g_touching = false;
-bool g_padTouch = false;                      // stylus down on the pad (game on top)
+// Game on the top screen: the touch screen is the pad. A stylus-down on a pad button presses it
+// (PT_IGNORE until the stylus lifts); anywhere else the touch screen is a touchpad (PT_PAD): a
+// slide moves the game's cursor by how far it slides (like a laptop's), a short tap clicks where
+// the cursor points (R held: right click), and a short tap on the battle pad's close-up map
+// clicks that square.
+enum PadTouch { PT_NONE, PT_IGNORE, PT_PAD };
+PadTouch g_pt = PT_NONE;
+int g_ptLastX = 0, g_ptLastY = 0, g_ptStartX = 0, g_ptStartY = 0, g_ptMoved = 0;
+Uint32 g_ptStart = 0;
+bool g_ptOnMap = false;
+Uint8 g_tapButton = 0;                        // touchpad tap: button held until g_tapReleaseAt
+Uint32 g_tapReleaseAt = 0;
+bool g_rHeld = false, g_rUsed = false;        // R while the game is on top (right-click modifier)
 bool g_userFlip = false;                      // SELECT / Swap: flip the automatic layout
 int g_lastAutoTop = -1;
 const Uint8 kMark = 0x3D;                     // "which" tag on events we post
@@ -170,6 +182,18 @@ void moveCursor(float x, float y)
 	g_cx = std::max(0.f, std::min((float)kGameW - 1, x));
 	g_cy = std::max(0.f, std::min((float)kGameH - 1, y));
 	if ((int)ox != (int)g_cx || (int)oy != (int)g_cy) postMotion((int)g_cx - (int)ox, (int)g_cy - (int)oy);
+}
+
+void touchpadTap()
+{
+	if (g_ptOnMap && OpenXcom::TopScreen3DS::mapTap(OpenXcom::State::game3ds(), g_ptStartX, touchToGameY(g_ptStartY)))
+		return;
+	const bool right = (hidKeysHeld() & KEY_R) != 0;
+	if (right) g_rUsed = true;
+	if (g_tapButton) postButton(g_tapButton, false);
+	g_tapButton = right ? SDL_BUTTON_RIGHT : SDL_BUTTON_LEFT;
+	postButton(g_tapButton, true);
+	g_tapReleaseAt = SDL_GetTicks() + 100;
 }
 
 bool clickable(OpenXcom::Surface *s)
@@ -270,6 +294,8 @@ void runManual()
 	if (g_buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) postButton(SDL_BUTTON_LEFT, false);
 	if (g_buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) postButton(SDL_BUTTON_RIGHT, false);
 	g_touching = false;
+	if (g_tapButton) { postButton(g_tapButton, false); g_tapButton = 0; }
+	g_pt = PT_NONE;
 
 	const int half = scr->h / 2;               // 200: top rows, then the touch screen
 	static std::vector<uint8_t> topPx, botPx;
@@ -316,7 +342,7 @@ void runManual()
 			g_manual.draw_bottom(bot);
 			blitCanvas(scr, top, 0);
 			blitCanvas(scr, bot, half);
-			SDL_Flip(scr);
+			openxcom3dsPresent(scr, false, false);
 			redraw = false;
 		}
 		else
@@ -342,22 +368,48 @@ void openxcom3dsPumpInput()
 		if (SDL_NumJoysticks() > 0) g_pad = SDL_JoystickOpen(0);
 		SDL_JoystickEventState(SDL_IGNORE);
 	}
+	// a touchpad tap holds its button 100 ms, so the game's buttons show pressed
+	if (g_tapButton && SDL_GetTicks() >= g_tapReleaseAt) { postButton(g_tapButton, false); g_tapButton = 0; }
 	// touch screen, straight from the hardware
 	if (g_touchBlocked)
 	{
 		if (!(hidKeysHeld() & KEY_TOUCH)) g_touchBlocked = false;
 	}
-	else if (g_padTouch)
+	else if (g_pt != PT_NONE)
 	{
-		// game on the top screen: the touch screen is the pad (one action per tap)
-		if (!(hidKeysHeld() & KEY_TOUCH)) g_padTouch = false;
+		if (!(hidKeysHeld() & KEY_TOUCH))
+		{
+			if (g_pt == PT_PAD && g_ptMoved < 8 && SDL_GetTicks() - g_ptStart < 350) touchpadTap();
+			g_pt = PT_NONE;
+		}
+		else if (g_pt == PT_PAD)
+		{
+			touchPosition tp;
+			hidTouchRead(&tp);
+			const int dx = tp.px - g_ptLastX, dy = tp.py - g_ptLastY;
+			if (dx || dy)
+			{
+				// a little faster than 1:1, so one slide crosses the game's 320x200
+				moveCursor(g_cx + dx * 1.25f, g_cy + dy * 1.1f);
+				g_ptMoved += abs(dx) + abs(dy);
+				g_ptLastX = tp.px; g_ptLastY = tp.py;
+			}
+		}
 	}
 	else if (!g_touching && (hidKeysDown() & KEY_TOUCH) && openxcom3dsGameOnTop())
 	{
 		touchPosition tp;
 		hidTouchRead(&tp);
-		g_padTouch = true;
-		OpenXcom::TopScreen3DS::padTap(OpenXcom::State::game3ds(), tp.px, touchToGameY(tp.py));
+		const int gy = touchToGameY(tp.py);
+		if (OpenXcom::TopScreen3DS::padButton(tp.px, gy)) g_pt = PT_IGNORE;
+		else
+		{
+			g_pt = PT_PAD;
+			g_ptLastX = g_ptStartX = tp.px; g_ptLastY = g_ptStartY = tp.py;
+			g_ptMoved = 0; g_ptStart = SDL_GetTicks();
+			g_ptOnMap = OpenXcom::TopScreen3DS::onCloseMap(tp.px, gy);
+			if (g_rHeld) g_rUsed = true;             // R was a modifier this time, not "next soldier"
+		}
 	}
 	else if (hidKeysHeld() & KEY_TOUCH)
 	{
@@ -506,6 +558,23 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev)
 			return false;
 		}
 		if (down) g_endTurnArmed3ds = false;       // any other button cancels
+		if (k == SDLK_r)
+		{
+			// Game on the top screen: R held + a touchpad tap = right click, so R's own action
+			// (next soldier / zoom in) happens when it is let go, and only if no tap used it.
+			if (down && openxcom3dsGameOnTop()) { g_rHeld = true; g_rUsed = false; return false; }
+			if (!down && g_rHeld)
+			{
+				g_rHeld = false;
+				if (!g_rUsed)
+				{
+					SDL_Event c = ev;
+					remap(c, ctx);
+					openxcom3dsSendKey(c.key.keysym.sym);
+				}
+				return false;
+			}
+		}
 		if (ev.key.which == kMark) return true;    // C-stick arrows: always scroll, never menu focus
 		if (ctx == CTX_MENU && (k == SDLK_UP || k == SDLK_DOWN || k == SDLK_LEFT || k == SDLK_RIGHT))
 		{
@@ -520,15 +589,141 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev)
 		return true;
 	}
 }
+// ---- presenting the frame -----------------------------------------------------
+// The port puts both screens on the display itself instead of SDL_Flip. (3ds-sdl draws each
+// 320x200 half 1:1 in the middle of its screen with a GPU quad, so a game on the top screen had
+// side bars, and it has no 800-pixel-wide mode.)
+// - Top screen: with the 3D slider at 0 it runs in its 800x240 wide mode (gfxSetWide), where every
+//   real column of the screen is addressed instead of each pixel being doubled, so text is sharper
+//   across; with the slider up it goes back to 400x240 (the port draws no 3D, so the 3D stays off).
+// - The game on the top screen fills it: 320x200 stretched to 400x240 (800x240), nearest pixel,
+//   no side bars. The info panel and the manual text stay 1:1 (exactly 2:1 across in wide mode),
+//   centred, so their text keeps whole pixels.
+// - Touch screen: 320x200 at 1:1, 20 rows down (the touch mapping relies on this).
+// The SDL surface is 320x400 RGBA8 (0xRRGGBBAA): rows 0-199 top screen, rows 200-399 touch screen.
+namespace
+{
+bool g_presentInit = false;
+
+// D-pad focus in the game's menus: a gold ring around the button the cursor is on (the D-pad jumps
+// the cursor between buttons and A presses it). Drawn into the frame only, at the game's rows.
+void drawFocusRing(SDL_Surface *scr, int y0)
+{
+	OpenXcom::State *st = 0;
+	if (context(&st) != CTX_MENU || !st) return;
+	const std::vector<OpenXcom::Surface*> &v = st->getSurfaces3ds();
+	OpenXcom::Surface *hit = 0;
+	for (size_t i = v.size(); i-- > 0;)          // topmost first
+	{
+		OpenXcom::Surface *s = v[i];
+		if (!clickable(s)) continue;
+		if (g_cx >= s->getX() && g_cx < s->getX() + s->getWidth() && g_cy >= s->getY() && g_cy < s->getY() + s->getHeight())
+		{ hit = s; break; }
+	}
+	if (!hit) return;
+	const Uint32 gold = 0xFFC828FF, dark = 0x302000FF;
+	for (int r = 1; r <= 3; ++r)
+	{
+		const Uint32 c = r == 3 ? dark : gold;      // two gold pixels, a dark edge outside
+		const int x1 = hit->getX() - r, y1 = hit->getY() - r;
+		const int x2 = hit->getX() + hit->getWidth() - 1 + r, y2 = hit->getY() + hit->getHeight() - 1 + r;
+		for (int y = std::max(0, y1); y <= std::min(kGameH - 1, y2); ++y)
+		{
+			Uint32 *row = (Uint32 *)((Uint8 *)scr->pixels + (y0 + y) * scr->pitch);
+			if (y == y1 || y == y2)
+			{
+				for (int x = std::max(0, x1); x <= std::min(kGameW - 1, x2); ++x) row[x] = c;
+			}
+			else
+			{
+				if (x1 >= 0) row[x1] = c;
+				if (x2 < kGameW) row[x2] = c;
+			}
+		}
+	}
+}
+
+// One screen: out columns x 0..outW-1 (framebuffer column-major, 240 pixels per column, bottom
+// row first), each taken from source column sxmap(x) (-1 = black) and source row offsets ymap.
+template <typename SxFn>
+void blitScreen(u8 *fb, int outW, const Uint8 *pix, const int *ymap, SxFn sxOf)
+{
+	for (int x = 0; x < outW; ++x)
+	{
+		u8 *p = fb + (x * 240 + 239) * 3;          // pixel (x, 0)
+		const int sx = sxOf(x);
+		if (sx < 0) { memset(fb + x * 240 * 3, 0, 240 * 3); continue; }
+		const Uint8 *src = pix + sx * 4;
+		for (int y = 0; y < 240; ++y, p -= 3)
+		{
+			const int o = ymap[y];
+			if (o < 0) { p[0] = p[1] = p[2] = 0; continue; }
+			const Uint32 c = *(const Uint32 *)(src + o);
+			p[0] = (u8)(c >> 8); p[1] = (u8)(c >> 16); p[2] = (u8)(c >> 24);   // BGR8
+		}
+	}
+}
+}
+
+void openxcom3dsPresent(SDL_Surface *scr, bool gameOnTop, bool ring)
+{
+	if (!scr || !scr->pixels || !gspHasGpuRight()) return;
+	if (!g_presentInit)
+	{
+		g_presentInit = true;
+		gfxSetScreenFormat(GFX_TOP, GSP_BGR8_OES);
+		gfxSetScreenFormat(GFX_BOTTOM, GSP_BGR8_OES);
+		gfxSetDoubleBuffering(GFX_TOP, true);
+		gfxSetDoubleBuffering(GFX_BOTTOM, true);
+	}
+	const bool wantWide = osGet3DSliderState() <= 0.0f;
+	if (wantWide != gfxIsWide())              // libctru's own state (survives the HOME menu)
+	{
+		gfxSetWide(wantWide);
+		gfxSet3D(false);
+	}
+	if (SDL_MUSTLOCK(scr)) SDL_LockSurface(scr);
+	if (ring) drawFocusRing(scr, gameOnTop ? 0 : kGameH);
+	const Uint8 *pix = (const Uint8 *)scr->pixels;
+	const int pitch = scr->pitch;
+	int ymap[240];
+
+	// top screen
+	u16 fw = 0, fh = 0;
+	u8 *fb = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &fw, &fh);   // fw = 240 (a column), fh = 400 or 800
+	const int outW = fh;
+	for (int y = 0; y < 240; ++y)
+	{
+		const int sy = gameOnTop ? y * kGameH / 240 : y - 20;
+		ymap[y] = (sy >= 0 && sy < kGameH) ? sy * pitch : -1;
+	}
+	if (gameOnTop)
+		blitScreen(fb, outW, pix, ymap, [outW](int x) { return x * kGameW / outW; });
+	else
+	{
+		const int shift = outW >= 800 ? 1 : 0;
+		blitScreen(fb, outW, pix, ymap, [shift](int x) { const int sx = (x >> shift) - 40; return (sx >= 0 && sx < kGameW) ? sx : -1; });
+	}
+
+	// touch screen
+	fb = gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, &fw, &fh);      // 240 x 320
+	for (int y = 0; y < 240; ++y)
+	{
+		const int sy = y - 20;
+		ymap[y] = (sy >= 0 && sy < kGameH) ? (kGameH + sy) * pitch : -1;
+	}
+	blitScreen(fb, std::min((int)fh, kGameW), pix, ymap, [](int x) { return x; });
+
+	if (SDL_MUSTLOCK(scr)) SDL_UnlockSurface(scr);
+	gfxFlushBuffers();
+	gfxSwapBuffers();
+	gspWaitForVBlank();
+}
+
 // Battle (the main battlescape view): game on the top screen, the battle pad
 // on the touch screen. Everything else (Geoscape, bases, inventory, menus,
 // popups): game on the touch screen for the stylus. SELECT flips it until the
 // next change between the two.
-void openxcom3dsBeforeFlip()
-{
-	gspWaitForVBlank();
-}
-
 bool openxcom3dsGameOnTop()
 {
 	const bool autoTop = context(0) == CTX_BATTLE;
@@ -544,7 +739,7 @@ bool openxcom3dsGameOnTop()
 void openxcom3dsToggleSwap()
 {
 	g_userFlip = !g_userFlip;
-	g_padTouch = (hidKeysHeld() & KEY_TOUCH) != 0;   // a tap that swapped is not a game click
+	g_pt = (hidKeysHeld() & KEY_TOUCH) ? PT_IGNORE : PT_NONE;   // a tap that swapped is not a game click
 	if (g_buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) postButton(SDL_BUTTON_LEFT, false);
 	g_touching = false;
 	click3ds::play();

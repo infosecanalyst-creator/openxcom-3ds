@@ -69,9 +69,29 @@ with `-e BAKE_DATA=1`. **That file then contains the game itself: keep it on you
 ## Screen layout and controls (DS rule)
 
 Same rule as the Freeciv port: **the game you touch is on the bottom screen,
-the top screen is for glancing at.** One 320x400 SDL surface is split by
-3ds-sdl's dual-screen mode: rows 0-199 go to the top screen, rows 200-399 to
-the bottom; both are 1:1 pixels (no stretching).
+the top screen is for glancing at.** Battles are the exception: the game goes
+on the top screen and the touch screen becomes the battle pad. ZL swaps at any
+time. The game composes one 320x400 SDL surface (rows 0-199 top, rows 200-399
+touch screen), and the port puts it on the screens itself instead of SDL_Flip
+(`openxcom3dsPresent` in `src/3ds/platform3ds.cpp`):
+
+- **Game on the top screen: it fills the screen** (320x200 stretched to 400x240,
+  nearest pixel, no side bars).
+- **Sharp top screen:** with the 3D slider at 0 the top screen runs in its
+  800x240 wide mode (`gfxSetWide`), so every real column is drawn; with the
+  slider up it goes back to 400x240. The info panel stays 1:1 (2:1 across in
+  wide mode) so its text keeps whole pixels.
+- Touch screen: 320x200 at 1:1, centred.
+
+**Game on the top screen, touch screen as a touchpad:** apart from the pad's own
+buttons, sliding on the touch screen moves the game's cursor (relative, like a
+laptop touchpad), a quick tap clicks where it points, R held + tap is a right
+click (R's own job then happens on release, unless a tap used it). On the battle
+pad, a quick tap on the close-up map still clicks that square.
+
+**Without touch:** in the game's menus the D-pad moves a gold ring (and the
+cursor) to the nearest button; A presses it (the button shows pressed while A is
+held). The Circle Pad moves the cursor on whichever screen the game is on.
 
 | Bottom screen (touch) | Top screen (info, `src/3ds/topscreen3ds.cpp`) |
 |---|---|
@@ -85,13 +105,14 @@ the bottom; both are 1:1 pixels (no stretching).
 | Circle Pad | cursor | cursor | cursor |
 | A | click | click | click |
 | B | back (Esc) | back (Esc) | right click (turn) |
-| D-pad | jump between buttons | rotate globe | scroll map |
+| D-pad | gold ring between buttons | rotate globe | scroll map |
 | C-stick (New 3DS) | - | rotate globe | scroll map |
 | L / R | - | zoom out / in | previous / next soldier |
 | X | - | intercept | end turn (press twice) |
 | Y | - | bases | kneel |
 | ZR | - | - | view level up (tap) / down (hold) |
 | ZL | swap screens | swap screens | swap screens |
+| Touch, game on top | touchpad (slide, tap; R + tap = right click) | same | same; tap the close-up map to click a square |
 | Start | instruction manual | instruction manual | instruction manual |
 | Select | swap screens (same as ZL) | swap screens | swap screens |
 
@@ -107,8 +128,8 @@ how the layout and input are tested before hardware.
 ## In-game manual
 
 Start opens a built-in manual (text on the top screen, section buttons on
-the touch screen; Circle Pad / D-pad scroll, L/R change section, B or Start
-closes). The game waits while it is open. The text is `docs/manual.txt`,
+the touch screen; Circle Pad / C-Stick scroll, D-pad moves between sections,
+L/R change section, B or Start closes). The game waits while it is open. The text is `docs/manual.txt`,
 compiled into `src/3ds/manual_text.h`; a `manual.txt` in
 `sdmc:/3ds/openxcom/` replaces it without rebuilding.
 

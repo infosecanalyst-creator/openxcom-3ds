@@ -15,6 +15,7 @@ void openxcom3dsPostReturn();                // queue an Enter press for the gam
 // touch screen is the pad (topscreen3ds.cpp).
 bool openxcom3dsGameOnTop();
 void openxcom3dsToggleSwap();
+bool openxcom3dsLefty();                     // left-handed mode: D-Pad and A/B/X/Y swapped
 #include <SDL.h>
 void openxcom3dsSendKey(SDLKey key);         // press + release, passed to the game as is
 void openxcom3dsClickAt(int x, int y);       // left click at game coordinates

@@ -296,6 +296,7 @@ static void setLefty(bool on)
 	if (on) { if (FILE *f = fopen(kLeftyPath, "w")) fclose(f); }
 	else remove(kLeftyPath);
 }
+bool openxcom3dsLefty() { if (!g_leftyLoaded) loadLefty(); return g_lefty; }
 static u32 remapKeys(u32 m)
 {
 	if (!g_lefty) return m;
@@ -345,6 +346,7 @@ void runManual()
 		const u32 down = remapKeys(hidKeysDown()), rep = remapKeys(hidKeysDownRepeat());
 		manual3ds::Input mi;
 		g_manual.set_toggle(g_lefty ? "Left hand: on" : "Left hand: off");
+		g_manual.set_footer(g_lefty ? "Stick: scroll   A/B/X/Y: section   D-Down: close" : "");
 		static const struct { u32 b; uint32_t k; bool rep; } map[] = {
 			{ KEY_DUP, manual3ds::K_UP, true }, { KEY_DDOWN, manual3ds::K_DOWN, true },
 			{ KEY_CSTICK_UP, manual3ds::K_SCROLL_UP, true }, { KEY_CSTICK_DOWN, manual3ds::K_SCROLL_DOWN, true },

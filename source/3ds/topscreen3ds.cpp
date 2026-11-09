@@ -317,7 +317,7 @@ static void drawBattle(Surface *top, SavedBattleGame *battle)
 	frame(top, 2, 120, 316, 62);
 	drawRoster(top, battle, u, 5, 123, 310);
 	if (g_endTurnArmed3ds)
-		text(top, 4, 186, "Press X again to END TURN   (any other button cancels)", C_WARN);
+		text(top, 4, 186, openxcom3dsLefty() ? "Press D-Left again to END TURN  (other buttons cancel)" : "Press X again to END TURN   (any other button cancels)", C_WARN);
 	else
 		text(top, 4, 186, "Tap: path, tap again: move  L/R soldier  ZL: game on top", C_DIM);
 }
@@ -389,7 +389,7 @@ static void drawStrategic(Surface *top, SavedGame *save)
 			cy += 9;
 		}
 	}
-	text(top, 4, 186, "L/R zoom  X intercept  Y bases  ZL swap", C_DIM);
+	text(top, 4, 186, openxcom3dsLefty() ? "L/R zoom  D-Left intercept  D-Up bases  ZL swap" : "L/R zoom  X intercept  Y bases  ZL swap", C_DIM);
 }
 
 // ---- menus ----------------------------------------------------------------
@@ -400,8 +400,8 @@ static void drawMenu(Surface *top, bool pad = false)
 	text(top, 104, 50, "OpenXcom for New 3DS", C_DIM);
 	frame(top, 40, 72, 240, 102);
 	int y = 80;
-	const char *lines[] = {
-		pad ? "Touch screen: a touchpad for the game" : "Tap the bottom screen: click",
+	const char *first = pad ? "Touch screen: a touchpad for the game" : "Tap the bottom screen: click";
+	static const char *right[] = {
 		"Circle Pad cursor   A click   B back",
 		"D-pad: gold ring jumps to buttons",
 		"C-stick: scroll map / globe",
@@ -410,6 +410,17 @@ static void drawMenu(Surface *top, bool pad = false)
 		"  X twice: end turn   ZR level",
 		"ZL: swap screens   Start: manual",
 	};
+	static const char *left[] = {          // left-handed mode: D-Pad and A/B/X/Y swapped
+		"Circle Pad cursor   D-Right: click",
+		"D-Down: back   A/B/X/Y: gold ring",
+		"C-stick: scroll   ZR: level",
+		"Battle: tap to preview a path, tap",
+		"  again to move.  L/R: soldier",
+		"  D-Up: kneel   D-Left x2: end turn",
+		"ZL: swap screens   Start: manual",
+	};
+	const char *const *rest = openxcom3dsLefty() ? left : right;
+	const char *lines[8] = { first, rest[0], rest[1], rest[2], rest[3], rest[4], rest[5], rest[6] };
 	for (int i = 0; i < 8; ++i, y += 12) text(top, 52, y, lines[i], C_TEXT);
 }
 

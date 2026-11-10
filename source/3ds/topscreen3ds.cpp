@@ -437,8 +437,8 @@ static int g_nbtn = 0, g_flash = P_NONE;
 static Uint32 g_flashUntil = 0, g_endArmedAt = 0;
 static bool g_endArmed = false, g_dirty = true;
 // close-up map: n x n tiles from (g_mmTX, g_mmTY), cell px each, at (g_mmX, g_mmY)
-static const int kMmN = 18, kMmCell = 8;
-static int g_mmX = 3, g_mmY = 14, g_mmTX = 0, g_mmTY = 0, g_mmLevel = 0;
+static const int kMmN = 17, kMmCell = 8;   // 17 squares: the map ends above the buttons
+static int g_mmX = 6, g_mmY = 14, g_mmTX = 0, g_mmTY = 0, g_mmLevel = 0;
 static bool g_mmValid = false;
 static int g_mmFlashX = -1, g_mmFlashY = -1;
 
@@ -600,22 +600,35 @@ static void drawBattlePad(Surface *top, SavedBattleGame *battle)
 				y += 9;
 			}
 		}
-		text(top, rx + 2, 137, "Tap map square: click it", C_DIM, false, rw - 4);
-		text(top, rx + 2, 146, "Slide: pointer  Tap: click", C_DIM, false, rw - 4);
+		text(top, rx + 2, 139, "Tap map square: click it", C_DIM, false, rw - 4);
 	}
 
 	// battle buttons: two rows of six
 	g_nbtn = 0;
-	static const struct { const char *l; int id; } row1[6] = {
+	struct Row { const char *l; int id; };
+	static const Row row1[6] = {
 		{ "Prev", P_PREV }, { "Next", P_NEXT }, { "Kneel", P_KNEEL }, { "Inventory", P_INV }, { "Center", P_CENTER }, { "Map", P_MAP } };
-	static const struct { const char *l; int id; } row2[6] = {
+	static const Row row2[6] = {
 		{ "Level up", P_UP }, { "Level dn", P_DOWN }, { "L hand", P_LEFT }, { "R hand", P_RIGHT }, { "Swap", P_SWAP }, { "End turn", P_END } };
-	const int bw = 52, gap = 1, x0 = 2;
-	for (int i = 0; i < 6; ++i)
-	{
-		addBtn(x0 + i * (bw + gap), 162, bw, 17, row1[i].l, row1[i].id);
-		addBtn(x0 + i * (bw + gap), 181, bw, 17, row2[i].l, row2[i].id);
-	}
+	// UI rule 11 (in 320x200 pad space, shown 1.2x taller): rows 20 tall (24 px on screen), 4 apart,
+	// 6 from the sides and from the bottom; each button as wide as its label needs, plus an even share
+	// of what is left
+	const int edge = 6, gap = 4, bh = 20, y1 = 151, y2 = 175;
+	auto layRow = [&](const Row *row, int y) {
+		int need[6], sum = 0;
+		for (int i = 0; i < 6; ++i) { need[i] = textWidth(row[i].l) + 8; sum += need[i]; }
+		const int extra = std::max(0, (W - 2 * edge - 5 * gap - sum) / 6);
+		int x = edge;
+		for (int i = 0; i < 6; ++i)
+		{
+			int w = need[i] + extra;
+			if (i == 5) w = W - edge - x;   // the last one takes the rounding
+			addBtn(x, y, w, bh, row[i].l, row[i].id);
+			x += w + gap;
+		}
+	};
+	layRow(row1, y1);
+	layRow(row2, y2);
 	drawButtons(top);
 }
 
@@ -713,13 +726,13 @@ bool mapTap(Game *game, int x, int y)
 static void drawOtherPad(Surface *top, SavedGame *save)
 {
 	if (save) drawStrategic(top, save); else drawMenu(top, true);
-	rect(top, 0, 180, W, 20, C_BG);
+	rect(top, 0, 171, W, 29, C_BG);
 	// the rest of the touch screen is a touchpad for the game on the top screen
-	text(top, 4, 185, "Slide: pointer", C_DIM);
-	text(top, 214, 185, "Tap: click  R+tap: right", C_DIM);
+	text(top, 6, 181, "Slide: pointer", C_DIM);
+	text(top, 214, 181, "Tap: click  R+tap: right", C_DIM, false, W - 214 - 2);
 	g_mmValid = false;
 	g_nbtn = 0;
-	addBtn(110, 181, 100, 17, "Swap screens", P_SWAP);
+	addBtn(110, 175, 100, 20, "Swap screens", P_SWAP);   // rule 11: 24 px tall on screen, 6 px from the bottom
 	drawButtons(top);
 }
 

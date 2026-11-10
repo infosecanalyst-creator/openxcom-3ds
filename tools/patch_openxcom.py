@@ -231,8 +231,11 @@ rw(SC,
    "\t\tconst bool panel = _top3ds && _top3ds->getWidth() == _surface->getWidth();\n"
    "\t\tif (panel && openxcom3dsGameOnTop())\n\t\t{\n"
    "\t\t\tSDL_BlitSurface(_surface->getSurface(), 0, _screen, 0);       // top screen: the game\n"
+   "\t\t\tSDL_Rect padArea = { 0, (Sint16)_baseHeight, (Uint16)_screen->w, (Uint16)_baseHeight };\n"
+   "\t\t\tSDL_FillRect(_screen, &padArea, 0); // the pad's colour 0 is transparent: clear old frames first\n"
    "\t\t\tSDL_BlitSurface(_top3ds->getSurface(), 0, _screen, &lower);   // touch screen: the battle pad\n"
    "\t\t}\n\t\telse\n\t\t{\n"
+   "\t\t\tif (panel) { SDL_Rect topArea = { 0, 0, (Uint16)_screen->w, (Uint16)_baseHeight }; SDL_FillRect(_screen, &topArea, 0); }\n"
    "\t\t\tSDL_BlitSurface(panel ? _top3ds->getSurface() : _surface->getSurface(), 0, _screen, 0); // top: info panel\n"
    "\t\t\tSDL_BlitSurface(_surface->getSurface(), 0, _screen, &lower); // touch screen: the game\n"
    "\t\t}\n",

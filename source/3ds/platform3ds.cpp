@@ -345,6 +345,7 @@ void runManual()
 		hidScanInput();
 		const u32 down = remapKeys(hidKeysDown()), rep = remapKeys(hidKeysDownRepeat());
 		manual3ds::Input mi;
+		g_manual.set_pixel_scale_y(240.0f / 200.0f);   // the 200-row canvas is shown 240 tall
 		g_manual.set_toggle(g_lefty ? "Left hand: on" : "Left hand: off");
 		g_manual.set_footer(g_lefty ? "Stick: scroll   A/B/X/Y: section   D-Down: close" : "");
 		static const struct { u32 b; uint32_t k; bool rep; } map[] = {

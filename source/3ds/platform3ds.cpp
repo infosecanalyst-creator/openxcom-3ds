@@ -445,6 +445,7 @@ void pmFrame(manual3ds::Canvas &c, const char *title, const char *hint)
 
 void runPortMenu()
 {
+	if (!g_leftyLoaded) loadLefty();
 	SDL_Surface *scr = SDL_GetVideoSurface();
 	if (!scr) return;
 	if (g_buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) postButton(SDL_BUTTON_LEFT, false);
@@ -473,7 +474,7 @@ void runPortMenu()
 	while (aptMainLoop())
 	{
 		hidScanInput();
-		const u32 down = hidKeysDown(), rep = hidKeysDownRepeat();
+		const u32 down = remapKeys(hidKeysDown()), rep = remapKeys(hidKeysDownRepeat());   // left-handed play
 		PmBtn *bt = page == 0 ? items : yesno;
 		const int n = page == 0 ? 6 : 2;
 		if (pressFrames && !--pressFrames) { pressed = -1; redraw = true; if (action >= 0) break; }
@@ -515,12 +516,12 @@ void runPortMenu()
 			using namespace manual3ds::detail;
 			if (page == 0)
 			{
-				pmFrame(mc, "MENU", "A Select   B Back   ZL Swap");
+				pmFrame(mc, "MENU", g_lefty ? "D-Right Select   D-Down Back   ZL Swap" : "A Select   B Back   ZL Swap");
 				for (int i = 0; i < 6; ++i) pmButton(mc, items[i], i == focus, i == pressed);
 			}
 			else
 			{
-				pmFrame(mc, "EXIT GAME", "A Select   B Back");
+				pmFrame(mc, "EXIT GAME", g_lefty ? "D-Right Select   D-Down Back" : "A Select   B Back");
 				const char *q = inGame ? "Exit OpenXcom? Unsaved progress is lost." : "Exit OpenXcom?";
 				text(mc, (mc.w - 6 * ulen(q)) / 2, 70, q, PM_TXT);
 				for (int i = 0; i < 2; ++i) pmButton(mc, yesno[i], i == focus, i == pressed);
@@ -530,7 +531,7 @@ void runPortMenu()
 			text(ic, 8, 28, inGame ? "Paused while the menu is open." : "Main menu.", PM_TXT);
 			blitCanvas(scr, top, 0);
 			blitCanvas(scr, bot, half);
-			SDL_Flip(scr);
+			openxcom3dsPresent(scr, onTop, false);   // the port's presenter: fills the top screen in every mode
 			redraw = false;
 		}
 		else gspWaitForVBlank();

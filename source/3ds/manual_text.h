@@ -9,7 +9,7 @@ The game has two halves:
 - The Geoscape: the world map, where time passes, UFOs appear and you run your bases.
 - The Battlescape: turn-based ground combat with your soldiers.
 
-Press Start at any time to open this manual. The game waits underneath.
+Press Start at any time for the menu: Resume, Manual, Quick Save, Quick Load, Game Options and Exit Game. The game waits underneath.
 
 ## Using this manual
 - Circle Pad or C-Stick up/down: scroll the text (hold to keep scrolling).
@@ -30,7 +30,7 @@ Windows that need the stylus (inventory, the fire-mode menu, messages) come down
 The game is on the touch screen: tap it with the stylus as if it were a mouse. The top screen shows what you would otherwise open a window for: date, funds, UFOs on radar, research and manufacture, each base's staff and craft.
 
 ## ZL: swap
-ZL (or SELECT, or the Swap button) puts the game on the other screen, at any time.
+ZL (or the Swap button) puts the game on the other screen, at any time.
 
 # Touch and cursor
 - Tap: left click where you tap.
@@ -56,8 +56,7 @@ When a name field opens (a new base, a soldier, a save), the 3DS keyboard appear
 | Y | Globe: bases. Battle: kneel
 | ZR | Battle: view level up (hold: down)
 | ZL | Swap the screens
-| Select | Swap screens
-| Start | Open this manual
+| Start | Menu (manual, quick save and load, options, exit)
 
 # Starting a campaign
 1. Choose New Game and a difficulty. Beginner is a good first choice.

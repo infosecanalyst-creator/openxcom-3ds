@@ -27,6 +27,11 @@ CXXFLAGS += $(ARCH) -D__3DS__ -DARM11 -D__NO_OPENGL -D_GNU_SOURCE -std=gnu++11 -
             -I$(PORTLIBS)/include -I$(PORTLIBS)/include/SDL -I$(CTRULIB)/include \
             -include 3ds/mouse3ds.h
 LDFLAGS  := -specs=3dsx.specs $(ARCH) -Wl,--gc-sections -L$(PORTLIBS)/lib -L$(CTRULIB)/lib
+# Hardware test hooks (3ds-test-suite hwtest/selftest): inactive unless the test agent
+# starts the game with --selftest=<script>.
+SELFTEST_WRAP := hidScanInput hidKeysHeld hidKeysDown hidKeysDownRepeat hidKeysUp hidTouchRead hidCircleRead irrstCstickRead aptMainLoop
+LDFLAGS  += $(foreach f,$(SELFTEST_WRAP),-Wl,--wrap=$(f))
+OBJS     += $(OBJDIR)selftest3ds.o
 LIBS     := -lSDL_gfx -lSDL_mixer -lSDL_image -lSDL -lyaml-cpp \
             -lpng -ljpeg -lz -lvorbisidec -logg -lmikmod -lmad -lcitro3d -lctru -lm
 
@@ -55,6 +60,10 @@ $(OBJDIR)%.o:: $(1)%.cpp
 endef
 $(eval $(call RULE,))
 $(foreach d,$(sort $(dir $(SRCS))),$(eval $(call RULE,$(d))))
+
+$(OBJDIR)selftest3ds.o: 3ds/selftest3ds.c
+	@mkdir -p $(OBJDIR)
+	arm-none-eabi-gcc $(ARCH) -O2 -D__3DS__ -I$(CTRULIB)/include -c -o $@ $<
 
 -include $(OBJS:.o=.d)
 

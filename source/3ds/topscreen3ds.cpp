@@ -408,7 +408,7 @@ static void drawMenu(Surface *top, bool pad = false)
 		"Battle: tap to preview a path, tap",
 		"  again to move.  L/R soldier  Y kneel",
 		"  X twice: end turn   ZR level",
-		"ZL: swap screens   Start: manual",
+		"ZL: swap screens   Start: menu",
 	};
 	static const char *left[] = {          // left-handed mode: D-Pad and A/B/X/Y swapped
 		"Circle Pad cursor   D-Right: click",

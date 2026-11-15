@@ -396,6 +396,164 @@ void runManual()
 }
 }
 
+// ---- START menu (house style) ----------------------------------------------
+// Resume / Manual / Quick save / Quick load / Game options / Exit game. Its own
+// loop like the manual, so the game waits underneath.
+namespace
+{
+const uint8_t PM_HDR[3] = {255, 204, 64}, PM_TXT[3] = {235, 240, 250}, PM_DIM[3] = {120, 130, 160};
+
+struct PmBtn { int x, y, w, h; const char *label; bool on; };
+
+void pmBox(manual3ds::Canvas &c, int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b)
+{
+	manual3ds::detail::fill(c, x, y, w, 1, r, g, b);
+	manual3ds::detail::fill(c, x, y + h - 1, w, 1, r, g, b);
+	manual3ds::detail::fill(c, x, y, 1, h, r, g, b);
+	manual3ds::detail::fill(c, x + w - 1, y, 1, h, r, g, b);
+}
+
+void pmButton(manual3ds::Canvas &c, const PmBtn &b, bool focus, bool pressed)
+{
+	using namespace manual3ds::detail;
+	if (!b.on) { fill(c, b.x, b.y, b.w, b.h, 22, 28, 54); pmBox(c, b.x, b.y, b.w, b.h, 50, 60, 90); }
+	else if (pressed) { fill(c, b.x, b.y, b.w, b.h, 220, 180, 60); pmBox(c, b.x, b.y, b.w, b.h, 120, 150, 230); }
+	else
+	{
+		fill(c, b.x + 2, b.y + 2, b.w, b.h, 20, 30, 70);
+		fill(c, b.x, b.y, b.w, b.h, 40, 56, 120);
+		pmBox(c, b.x, b.y, b.w, b.h, 120, 150, 230);
+	}
+	if (focus && b.on) { pmBox(c, b.x - 2, b.y - 2, b.w + 4, b.h + 4, 255, 204, 64); pmBox(c, b.x - 3, b.y - 3, b.w + 6, b.h + 6, 255, 204, 64); }
+	const int tw = 7 * ulen(b.label), p = pressed ? 1 : 0;
+	text(c, b.x + (b.w - tw) / 2 + p, b.y + (b.h - 13) / 2 + p, b.label, b.on ? PM_TXT : PM_DIM, true);
+}
+
+void pmFrame(manual3ds::Canvas &c, const char *title, const char *hint)
+{
+	using namespace manual3ds::detail;
+	fill(c, 0, 0, c.w, c.h, 8, 12, 40);
+	fill(c, 0, 0, c.w, 18, 40, 56, 120);
+	fill(c, 0, 18, c.w, 1, 120, 150, 230);
+	text(c, 6, 2, title, PM_HDR, true);
+	fill(c, 0, c.h - 16, c.w, 16, 40, 56, 120);
+	fill(c, 0, c.h - 16, c.w, 1, 120, 150, 230);
+	const int hw = 6 * ulen(hint);
+	text(c, (c.w - hw) / 2, c.h - 15, hint, PM_HDR);
+}
+}
+
+void runPortMenu()
+{
+	SDL_Surface *scr = SDL_GetVideoSurface();
+	if (!scr) return;
+	if (g_buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) postButton(SDL_BUTTON_LEFT, false);
+	if (g_buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) postButton(SDL_BUTTON_RIGHT, false);
+	g_touching = false;
+	const Ctx ctx = context(0);
+	const bool inGame = ctx != CTX_MENU;
+	const int half = scr->h / 2;
+	static std::vector<uint8_t> topPx, botPx;
+	topPx.assign(scr->w * half * 3, 0);
+	botPx.assign(scr->w * half * 3, 0);
+	manual3ds::Canvas top = { scr->w, half, topPx.data() };
+	manual3ds::Canvas bot = { scr->w, half, botPx.data() };
+	const bool onTop = openxcom3dsGameOnTop();      // the menu goes where the game is
+	manual3ds::Canvas &mc = onTop ? top : bot, &ic = onTop ? bot : top;
+
+	PmBtn items[6] = {
+		{ 70, 24, 180, 22, "RESUME", true }, { 70, 50, 180, 22, "MANUAL", true },
+		{ 70, 76, 180, 22, "QUICK SAVE", inGame }, { 70, 102, 180, 22, "QUICK LOAD", inGame },
+		{ 70, 128, 180, 22, "GAME OPTIONS", inGame }, { 70, 154, 180, 22, "EXIT GAME", true } };
+	PmBtn yesno[2] = { { 40, 110, 110, 30, "YES", true }, { 170, 110, 110, 30, "NO", true } };
+	int page = 0, focus = 0, pressed = -1, pressFrames = 0, action = -1;
+	hidSetRepeatParameters(20, 6);
+	click3ds::play();
+	bool redraw = true;
+	while (aptMainLoop())
+	{
+		hidScanInput();
+		const u32 down = hidKeysDown(), rep = hidKeysDownRepeat();
+		PmBtn *bt = page == 0 ? items : yesno;
+		const int n = page == 0 ? 6 : 2;
+		if (pressFrames && !--pressFrames) { pressed = -1; redraw = true; if (action >= 0) break; }
+		if (action < 0 && pressFrames == 0)
+		{
+			if (down & (KEY_B | KEY_START))
+			{
+				click3ds::play();
+				if (page == 1) { page = 0; focus = 5; redraw = true; }
+				else break;
+			}
+			const u32 prev = page == 0 ? KEY_DUP : KEY_DLEFT, next = page == 0 ? KEY_DDOWN : KEY_DRIGHT;
+			if (rep & (prev | next))
+			{
+				do focus = (focus + ((rep & next) ? 1 : n - 1)) % n; while (!bt[focus].on);
+				redraw = true;
+			}
+			int hit = -1;
+			if (down & KEY_A) hit = focus;
+			else if ((down & KEY_TOUCH) && !onTop)
+			{
+				touchPosition tp; hidTouchRead(&tp);
+				const int ty = touchToGameY(tp.py);
+				for (int i = 0; i < n; ++i)
+					if (bt[i].on && tp.px >= bt[i].x && tp.px < bt[i].x + bt[i].w && ty >= bt[i].y && ty < bt[i].y + bt[i].h) hit = i;
+			}
+			if (hit >= 0 && bt[hit].on)
+			{
+				click3ds::play();
+				focus = hit; pressed = hit; pressFrames = 6; redraw = true;
+				if (page == 0 && hit == 5) { page = 1; focus = 1; pressed = -1; pressFrames = 0; }
+				else if (page == 1) { if (hit == 0) action = 10; else { page = 0; focus = 5; pressed = -1; pressFrames = 0; } }
+				else action = hit;
+			}
+		}
+		if (down & KEY_ZL) { openxcom3dsToggleSwap(); break; }
+		if (redraw)
+		{
+			using namespace manual3ds::detail;
+			if (page == 0)
+			{
+				pmFrame(mc, "MENU", "A Select   B Back   ZL Swap");
+				for (int i = 0; i < 6; ++i) pmButton(mc, items[i], i == focus, i == pressed);
+			}
+			else
+			{
+				pmFrame(mc, "EXIT GAME", "A Select   B Back");
+				const char *q = inGame ? "Exit OpenXcom? Unsaved progress is lost." : "Exit OpenXcom?";
+				text(mc, (mc.w - 6 * ulen(q)) / 2, 70, q, PM_TXT);
+				for (int i = 0; i < 2; ++i) pmButton(mc, yesno[i], i == focus, i == pressed);
+			}
+			fill(ic, 0, 0, ic.w, ic.h, 8, 12, 40);
+			text(ic, 8, 8, "OpenXcom", PM_HDR, true);
+			text(ic, 8, 28, inGame ? "Paused while the menu is open." : "Main menu.", PM_TXT);
+			blitCanvas(scr, top, 0);
+			blitCanvas(scr, bot, half);
+			SDL_Flip(scr);
+			redraw = false;
+		}
+		else gspWaitForVBlank();
+	}
+	g_touchBlocked = (hidKeysHeld() & KEY_TOUCH) != 0;
+	SDL_PumpEvents();
+	SDL_Event ev;
+	while (SDL_PeepEvents(&ev, 1, SDL_GETEVENT, SDL_EVENTMASK(SDL_KEYDOWN) | SDL_EVENTMASK(SDL_KEYUP)
+	                      | SDL_EVENTMASK(SDL_MOUSEBUTTONDOWN) | SDL_EVENTMASK(SDL_MOUSEBUTTONUP)) > 0)
+		;
+	g_lastTick = 0;
+	OpenXcom::TopScreen3DS::invalidate();
+	switch (action)
+	{
+	case 1: runManual(); break;
+	case 2: openxcom3dsSendKey(OpenXcom::Options::keyQuickSave); break;
+	case 3: openxcom3dsSendKey(OpenXcom::Options::keyQuickLoad); break;
+	case 4: openxcom3dsSendKey(ctx == CTX_BATTLE ? OpenXcom::Options::keyBattleOptions : OpenXcom::Options::keyGeoOptions); break;
+	case 10: if (OpenXcom::Game *g = OpenXcom::State::game3ds()) g->quit(); break;
+	default: break;
+	}
+}
+
 void openxcom3dsPumpInput()
 {
 	if (!g_padTried)
@@ -550,12 +708,14 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev)
 			              << " gameOnTop " << openxcom3dsGameOnTop();
 		if (ev.key.which == kMark && (k != SDLK_UP && k != SDLK_DOWN && k != SDLK_LEFT && k != SDLK_RIGHT))
 			return true;                       // keys sent by the pad / keyboard: as they are
-		if (k == SDLK_ESCAPE || k == SDLK_LSHIFT)
+		if (k == SDLK_LSHIFT)
 		{
-			// SELECT or ZL: game on the top screen <-> on the touch screen
+			// ZL: game on the top screen <-> on the touch screen (the house swap button)
 			if (down) openxcom3dsToggleSwap();
 			return false;
 		}
+		if (k == SDLK_ESCAPE)
+			return false;                      // SELECT: unused (ZL is the only swap)
 		if (k == SDLK_RSHIFT && ctx == CTX_BATTLE)
 		{
 			// ZR: tap = view level up, hold (0.35 s) = level down. Decided on release, and sent
@@ -568,8 +728,8 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev)
 		}
 		if (k == SDLK_RETURN && ev.key.which != kMark)
 		{
-			// Start = in-game manual (the keyboard's own Enter is tagged kMark)
-			if (down) runManual();
+			// Start = the house START menu (the keyboard's own Enter is tagged kMark)
+			if (down) runPortMenu();
 			return false;
 		}
 		if (k == SDLK_a || (k == SDLK_b && ctx == CTX_BATTLE))

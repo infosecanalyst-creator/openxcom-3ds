@@ -118,6 +118,7 @@ float g_cx = kGameW / 2, g_cy = kGameH / 2;   // cursor, game space
 Uint32 g_lastTick = 0;
 Uint8 g_buttons = 0;                          // SDL_BUTTON masks currently held
 bool g_touching = false;
+static u32 g_padPrevHeld = 0;   // openxcom3dsPumpInput's last held state (its own key edges)
 // Game on the top screen: the touch screen is the pad. A stylus-down on a pad button presses it
 // (PT_IGNORE until the stylus lifts); anywhere else the touch screen is a touchpad (PT_PAD): a
 // slide moves the game's cursor by how far it slides (like a laptop's), a short tap clicks where
@@ -543,6 +544,7 @@ void runPortMenu()
 	                      | SDL_EVENTMASK(SDL_MOUSEBUTTONDOWN) | SDL_EVENTMASK(SDL_MOUSEBUTTONUP)) > 0)
 		;
 	g_lastTick = 0;
+	g_padPrevHeld = hidKeysHeld();   // the button that closed the menu is not a new press for the game
 	OpenXcom::TopScreen3DS::invalidate();
 	switch (action)
 	{
@@ -557,6 +559,13 @@ void runPortMenu()
 
 void openxcom3dsPumpInput()
 {
+	// Edges from our own copy of the held state: 3ds-sdl scans the HID once per SDL_PollEvent
+	// call, so hidKeysDown()/hidKeysUp() only show what changed in the last of several scans
+	// per frame. A stylus or button press that landed in an earlier scan was lost (the pad
+	// then saw a plain held touch and clicked the game at the cursor instead).
+	const u32 heldNow = hidKeysHeld();
+	const u32 edgeDown = heldNow & ~g_padPrevHeld, edgeUp = g_padPrevHeld & ~heldNow;
+	g_padPrevHeld = heldNow;
 	if (!g_padTried)
 	{
 		g_padTried = true;
@@ -592,7 +601,7 @@ void openxcom3dsPumpInput()
 			}
 		}
 	}
-	else if (!g_touching && (hidKeysDown() & KEY_TOUCH) && openxcom3dsGameOnTop())
+	else if (!g_touching && (edgeDown & KEY_TOUCH) && openxcom3dsGameOnTop())
 	{
 		touchPosition tp;
 		hidTouchRead(&tp);
@@ -652,7 +661,7 @@ void openxcom3dsPumpInput()
 			{ KEY_ZL, SDLK_LSHIFT }, { KEY_ZR, SDLK_RSHIFT },
 			{ KEY_DUP, SDLK_UP }, { KEY_DDOWN, SDLK_DOWN }, { KEY_DLEFT, SDLK_LEFT }, { KEY_DRIGHT, SDLK_RIGHT } };
 		if (!g_leftyLoaded) loadLefty();
-		const u32 kd = remapKeys(hidKeysDown()), ku = remapKeys(hidKeysUp());
+		const u32 kd = remapKeys(edgeDown), ku = remapKeys(edgeUp);
 		for (size_t i = 0; i < sizeof(pm) / sizeof(pm[0]); ++i)
 			for (int up = 0; up < 2; ++up)
 				if ((up ? ku : kd) & pm[i].bit)

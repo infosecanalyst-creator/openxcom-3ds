@@ -368,6 +368,15 @@ void runManual()
 			mi.tx = tp.px;
 			mi.ty = touchToGameY(tp.py);       // the 320x200 bottom half is centred
 		}
+		mi.has_hold = true;                    // drag to scroll
+		if (hidKeysHeld() & KEY_TOUCH)
+		{
+			touchPosition tp;
+			hidTouchRead(&tp);
+			mi.touch_held = true;
+			mi.hx = tp.px;
+			mi.hy = touchToGameY(tp.py);
+		}
 		circlePosition cp;
 		hidCircleRead(&cp);
 		mi.cpad_y = cp.dy;

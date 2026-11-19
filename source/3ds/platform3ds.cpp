@@ -566,11 +566,11 @@ void runPortMenu()
 				{
 					sg->setName(OpenXcom::SavedGame::QUICKSAVE);
 					sg->save(OpenXcom::SavedGame::QUICKSAVE);
-					Log(OpenXcom::LOG_INFO) << "3ds: quick-saved on exit";
+					printf("3ds: quick-saved on exit\n");
 				}
 				catch (...)
 				{
-					Log(OpenXcom::LOG_ERROR) << "3ds: quick save on exit failed";
+					printf("3ds: quick save on exit failed\n");
 				}
 			}
 			g->quit();

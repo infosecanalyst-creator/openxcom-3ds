@@ -21,6 +21,7 @@
 #include "../Interface/ComboBox.h"
 #include "../Battlescape/BattlescapeState.h"
 #include "../Geoscape/GeoscapeState.h"
+#include "../Savegame/SavedGame.h"
 #include "topscreen3ds.h"
 #include "../Engine/Logger.h"
 #include <typeinfo>
@@ -523,7 +524,7 @@ void runPortMenu()
 			else
 			{
 				pmFrame(mc, "EXIT GAME", g_lefty ? "D-Right Select   D-Down Back" : "A Select   B Back");
-				const char *q = inGame ? "Exit OpenXcom? Unsaved progress is lost." : "Exit OpenXcom?";
+				const char *q = inGame ? "Exit OpenXcom? It is quick-saved first." : "Exit OpenXcom?";
 				text(mc, (mc.w - 6 * ulen(q)) / 2, 70, q, PM_TXT);
 				for (int i = 0; i < 2; ++i) pmButton(mc, yesno[i], i == focus, i == pressed);
 			}
@@ -552,7 +553,29 @@ void runPortMenu()
 	case 2: openxcom3dsSendKey(OpenXcom::Options::keyQuickSave); break;
 	case 3: openxcom3dsSendKey(OpenXcom::Options::keyQuickLoad); break;
 	case 4: openxcom3dsSendKey(ctx == CTX_BATTLE ? OpenXcom::Options::keyBattleOptions : OpenXcom::Options::keyGeoOptions); break;
-	case 10: if (OpenXcom::Game *g = OpenXcom::State::game3ds()) g->quit(); break;
+	case 10:
+		if (OpenXcom::Game *g = OpenXcom::State::game3ds())
+		{
+			// Rule 17 (never lose progress): a game in progress is quick-saved first, the
+			// same save QUICK LOAD and Load > Quick save pick up (as SaveGameState SAVE_QUICK
+			// does; Ironman games save themselves).
+			OpenXcom::SavedGame *sg = g->getSavedGame();
+			if (ctx != CTX_MENU && sg && !sg->isIronman())
+			{
+				try
+				{
+					sg->setName(OpenXcom::SavedGame::QUICKSAVE);
+					sg->save(OpenXcom::SavedGame::QUICKSAVE);
+					Log(OpenXcom::LOG_INFO) << "3ds: quick-saved on exit";
+				}
+				catch (...)
+				{
+					Log(OpenXcom::LOG_ERROR) << "3ds: quick save on exit failed";
+				}
+			}
+			g->quit();
+		}
+		break;
 	default: break;
 	}
 }

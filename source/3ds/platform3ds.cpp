@@ -49,8 +49,32 @@ static void shutdown3ds()
 	romfsExit();
 }
 
+// OX-06: the game needs the New 3DS's memory (heap3ds.cpp). On an Old 3DS say so and
+// return to the Homebrew Menu, instead of running out of memory part-way in.
+static void requireNew3ds()
+{
+	bool n3ds = false;
+	APT_CheckNew3DS(&n3ds);
+	if (n3ds) return;
+	gfxInitDefault();
+	consoleInit(GFX_TOP, NULL);
+	printf("\n\n  OpenXcom needs a New 3DS or New 2DS XL.\n\n"
+	       "  This system does not have enough memory\n"
+	       "  to run it.\n\n\n"
+	       "  Press START to go back.\n");
+	while (aptMainLoop())
+	{
+		hidScanInput();
+		if (hidKeysDown() & (KEY_START | KEY_B | KEY_A)) break;
+		gspWaitForVBlank();
+	}
+	gfxExit();
+	exit(0);
+}
+
 void openxcom3dsInit()
 {
+	requireNew3ds();
 	osSetSpeedupEnable(true);        // New 3DS: 804 MHz + L2 cache
 	romfsInit();
 	mkdir("sdmc:/3ds", 0777);
@@ -459,6 +483,28 @@ void pmFrame(manual3ds::Canvas &c, const char *title, const char *hint)
 static int g_pmStartPage = 0;
 static bool g_pmExitNoSave = false;
 
+// Rule 17 exit save (EXIT GAME, and HOME > Close since OX-03): the quick save QUICK LOAD
+// and Load > Quick save pick up. Nothing to save (main menu, no game, Ironman, which
+// Game::quit saves itself) counts as done. False only when the save itself failed.
+static bool exitQuickSave(Ctx ctx)
+{
+	OpenXcom::Game *g = OpenXcom::State::game3ds();
+	OpenXcom::SavedGame *sg = g ? g->getSavedGame() : 0;
+	if (!g || ctx == CTX_MENU || !sg || sg->isIronman()) return true;
+	try
+	{
+		sg->setName(OpenXcom::SavedGame::QUICKSAVE);
+		sg->save(OpenXcom::SavedGame::QUICKSAVE);
+		printf("3ds: quick-saved on exit\n");
+		return true;
+	}
+	catch (...)
+	{
+		printf("3ds: quick save on exit failed\n");
+		return false;
+	}
+}
+
 void runPortMenu()
 {
 	if (!g_leftyLoaded) loadLefty();
@@ -487,23 +533,7 @@ void runPortMenu()
 	// Rule 17: a game in progress is quick-saved before EXIT, the same save QUICK LOAD and
 	// Load > Quick save pick up (Ironman games save themselves). OX-01: when it fails
 	// (SD card full or locked) the menu asks before quitting instead of quitting anyway.
-	auto exitSave = [&]() -> bool {
-		OpenXcom::Game *g = OpenXcom::State::game3ds();
-		OpenXcom::SavedGame *sg = g ? g->getSavedGame() : 0;
-		if (!g || ctx == CTX_MENU || !sg || sg->isIronman()) return true;
-		try
-		{
-			sg->setName(OpenXcom::SavedGame::QUICKSAVE);
-			sg->save(OpenXcom::SavedGame::QUICKSAVE);
-			printf("3ds: quick-saved on exit\n");
-			return true;
-		}
-		catch (...)
-		{
-			printf("3ds: quick save on exit failed\n");
-			return false;
-		}
-	};
+	auto exitSave = [&]() -> bool { return exitQuickSave(ctx); };
 	int page = g_pmStartPage, focus = page == 2 ? 1 : 0, pressed = -1, pressFrames = 0, action = -1;
 	g_pmStartPage = 0;
 	hidSetRepeatParameters(20, 6);
@@ -756,6 +786,21 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev)
 {
 	switch (ev.type)
 	{
+	case SDL_QUIT:
+	{
+		// OX-03: HOME > Close (aptMainLoop() false; 3ds-sdl sends SDL_QUIT). Run the same
+		// exit save as EXIT GAME, here in Game::run's event loop on the main thread, never
+		// in a menu loop (2dd475f: a save inside the port menu loop crashed the NDSP sound
+		// thread on exit). Game then quits the normal way (Game::quit). Once only.
+		static bool saved = false;
+		if (!saved)
+		{
+			saved = true;
+			const bool ok = exitQuickSave(context(0));
+			OpenXcom::Logger().get(OpenXcom::LOG_INFO) << "3ds HOME close: exit save " << (ok ? "ok" : "failed");
+		}
+		return true;
+	}
 	case SDL_MOUSEMOTION:
 		return ev.motion.which == kMark;       // drop 3ds-sdl's own touch events
 	case SDL_MOUSEBUTTONDOWN:

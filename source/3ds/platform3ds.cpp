@@ -454,6 +454,11 @@ void pmFrame(manual3ds::Canvas &c, const char *title, const char *hint)
 }
 }
 
+// OX-01: page the menu opens on (2 = SAVE FAILED, after a failed exit save) and the
+// player's EXIT ANYWAY choice on that page.
+static int g_pmStartPage = 0;
+static bool g_pmExitNoSave = false;
+
 void runPortMenu()
 {
 	if (!g_leftyLoaded) loadLefty();
@@ -499,7 +504,8 @@ void runPortMenu()
 			return false;
 		}
 	};
-	int page = 0, focus = 0, pressed = -1, pressFrames = 0, action = -1;
+	int page = g_pmStartPage, focus = page == 2 ? 1 : 0, pressed = -1, pressFrames = 0, action = -1;
+	g_pmStartPage = 0;
 	hidSetRepeatParameters(20, 6);
 	click3ds::play();
 	bool redraw = true;
@@ -540,14 +546,10 @@ void runPortMenu()
 				if (page == 0 && hit == 5) { page = 1; focus = 1; pressed = -1; pressFrames = 0; }
 				else if (page == 1)
 				{
-					if (hit == 0)
-					{
-						if (exitSave()) action = 10;
-						else { page = 2; focus = 1; pressed = -1; pressFrames = 0; }
-					}
+					if (hit == 0) action = 10;   // saved after the menu closes (as before OX-01)
 					else { page = 0; focus = 5; pressed = -1; pressFrames = 0; }
 				}
-				else if (page == 2) { if (hit == 0) action = 10; else { pressed = -1; pressFrames = 0; break; } }
+				else if (page == 2) { if (hit == 0) { g_pmExitNoSave = true; action = 10; } else { pressed = -1; pressFrames = 0; break; } }
 				else action = hit;
 			}
 		}
@@ -601,8 +603,16 @@ void runPortMenu()
 	case 2: openxcom3dsSendKey(OpenXcom::Options::keyQuickSave); break;
 	case 3: openxcom3dsSendKey(OpenXcom::Options::keyQuickLoad); break;
 	case 4: openxcom3dsSendKey(ctx == CTX_BATTLE ? OpenXcom::Options::keyBattleOptions : OpenXcom::Options::keyGeoOptions); break;
-	case 10:   // saved in the menu (or the player chose EXIT ANYWAY after a failed save)
-		if (OpenXcom::Game *g = OpenXcom::State::game3ds()) g->quit();
+	case 10:
+		// Quick-save after the menu has closed, exactly as before OX-01 (saving inside
+		// the menu loop crashed the sound thread on exit once). If the save fails, the
+		// menu reopens on SAVE FAILED: EXIT ANYWAY quits, NO returns to the game.
+		if (g_pmExitNoSave || exitSave())
+		{
+			g_pmExitNoSave = false;
+			if (OpenXcom::Game *g = OpenXcom::State::game3ds()) g->quit();
+		}
+		else { g_pmStartPage = 2; runPortMenu(); }
 		break;
 	default: break;
 	}

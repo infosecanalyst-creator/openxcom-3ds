@@ -478,6 +478,27 @@ void runPortMenu()
 		{ 70, 76, 180, 22, "QUICK SAVE", inGame }, { 70, 102, 180, 22, "QUICK LOAD", inGame },
 		{ 70, 128, 180, 22, "GAME OPTIONS", inGame }, { 70, 154, 180, 22, "EXIT GAME", true } };
 	PmBtn yesno[2] = { { 40, 110, 110, 30, "YES", true }, { 170, 110, 110, 30, "NO", true } };
+	PmBtn failno[2] = { { 30, 110, 130, 30, "EXIT ANYWAY", true }, { 170, 110, 110, 30, "NO", true } };
+	// Rule 17: a game in progress is quick-saved before EXIT, the same save QUICK LOAD and
+	// Load > Quick save pick up (Ironman games save themselves). OX-01: when it fails
+	// (SD card full or locked) the menu asks before quitting instead of quitting anyway.
+	auto exitSave = [&]() -> bool {
+		OpenXcom::Game *g = OpenXcom::State::game3ds();
+		OpenXcom::SavedGame *sg = g ? g->getSavedGame() : 0;
+		if (!g || ctx == CTX_MENU || !sg || sg->isIronman()) return true;
+		try
+		{
+			sg->setName(OpenXcom::SavedGame::QUICKSAVE);
+			sg->save(OpenXcom::SavedGame::QUICKSAVE);
+			printf("3ds: quick-saved on exit\n");
+			return true;
+		}
+		catch (...)
+		{
+			printf("3ds: quick save on exit failed\n");
+			return false;
+		}
+	};
 	int page = 0, focus = 0, pressed = -1, pressFrames = 0, action = -1;
 	hidSetRepeatParameters(20, 6);
 	click3ds::play();
@@ -486,7 +507,7 @@ void runPortMenu()
 	{
 		hidScanInput();
 		const u32 down = remapKeys(hidKeysDown()), rep = remapKeys(hidKeysDownRepeat());   // left-handed play
-		PmBtn *bt = page == 0 ? items : yesno;
+		PmBtn *bt = page == 0 ? items : page == 1 ? yesno : failno;
 		const int n = page == 0 ? 6 : 2;
 		if (pressFrames && !--pressFrames) { pressed = -1; redraw = true; if (action >= 0) break; }
 		if (action < 0 && pressFrames == 0)
@@ -495,7 +516,7 @@ void runPortMenu()
 			{
 				click3ds::play();
 				if (page == 1) { page = 0; focus = 5; redraw = true; }
-				else break;
+				else break;   // page 2 (save failed): back to the game
 			}
 			const u32 prev = page == 0 ? KEY_DUP : KEY_DLEFT, next = page == 0 ? KEY_DDOWN : KEY_DRIGHT;
 			if (rep & (prev | next))
@@ -517,7 +538,16 @@ void runPortMenu()
 				click3ds::play();
 				focus = hit; pressed = hit; pressFrames = 6; redraw = true;
 				if (page == 0 && hit == 5) { page = 1; focus = 1; pressed = -1; pressFrames = 0; }
-				else if (page == 1) { if (hit == 0) action = 10; else { page = 0; focus = 5; pressed = -1; pressFrames = 0; } }
+				else if (page == 1)
+				{
+					if (hit == 0)
+					{
+						if (exitSave()) action = 10;
+						else { page = 2; focus = 1; pressed = -1; pressFrames = 0; }
+					}
+					else { page = 0; focus = 5; pressed = -1; pressFrames = 0; }
+				}
+				else if (page == 2) { if (hit == 0) action = 10; else { pressed = -1; pressFrames = 0; break; } }
 				else action = hit;
 			}
 		}
@@ -530,12 +560,21 @@ void runPortMenu()
 				pmFrame(mc, "MENU", g_lefty ? "D-Right Select   D-Down Back   ZL Swap" : "A Select   B Back   ZL Swap");
 				for (int i = 0; i < 6; ++i) pmButton(mc, items[i], i == focus, i == pressed);
 			}
-			else
+			else if (page == 1)
 			{
 				pmFrame(mc, "EXIT GAME", g_lefty ? "D-Right Select   D-Down Back" : "A Select   B Back");
 				const char *q = inGame ? "Exit OpenXcom? It is quick-saved first." : "Exit OpenXcom?";
 				text(mc, (mc.w - 6 * ulen(q)) / 2, 70, q, PM_TXT);
 				for (int i = 0; i < 2; ++i) pmButton(mc, yesno[i], i == focus, i == pressed);
+			}
+			else
+			{
+				pmFrame(mc, "SAVE FAILED", g_lefty ? "D-Right Select   D-Down Back" : "A Select   B Back");
+				const char *q1 = "! The quick save failed (SD card full?).";
+				const char *q2 = "Exit without saving? NO goes back.";
+				text(mc, (mc.w - 6 * ulen(q1)) / 2, 62, q1, PM_TXT);
+				text(mc, (mc.w - 6 * ulen(q2)) / 2, 80, q2, PM_TXT);
+				for (int i = 0; i < 2; ++i) pmButton(mc, failno[i], i == focus, i == pressed);
 			}
 			fill(ic, 0, 0, ic.w, ic.h, 8, 12, 40);
 			text(ic, 8, 8, "OpenXcom", PM_HDR, true);
@@ -562,28 +601,8 @@ void runPortMenu()
 	case 2: openxcom3dsSendKey(OpenXcom::Options::keyQuickSave); break;
 	case 3: openxcom3dsSendKey(OpenXcom::Options::keyQuickLoad); break;
 	case 4: openxcom3dsSendKey(ctx == CTX_BATTLE ? OpenXcom::Options::keyBattleOptions : OpenXcom::Options::keyGeoOptions); break;
-	case 10:
-		if (OpenXcom::Game *g = OpenXcom::State::game3ds())
-		{
-			// Rule 17 (never lose progress): a game in progress is quick-saved first, the
-			// same save QUICK LOAD and Load > Quick save pick up (as SaveGameState SAVE_QUICK
-			// does; Ironman games save themselves).
-			OpenXcom::SavedGame *sg = g->getSavedGame();
-			if (ctx != CTX_MENU && sg && !sg->isIronman())
-			{
-				try
-				{
-					sg->setName(OpenXcom::SavedGame::QUICKSAVE);
-					sg->save(OpenXcom::SavedGame::QUICKSAVE);
-					printf("3ds: quick-saved on exit\n");
-				}
-				catch (...)
-				{
-					printf("3ds: quick save on exit failed\n");
-				}
-			}
-			g->quit();
-		}
+	case 10:   // saved in the menu (or the player chose EXIT ANYWAY after a failed save)
+		if (OpenXcom::Game *g = OpenXcom::State::game3ds()) g->quit();
 		break;
 	default: break;
 	}

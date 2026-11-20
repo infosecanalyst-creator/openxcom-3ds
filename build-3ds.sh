@@ -7,10 +7,16 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 SRC="${OPENXCOM_DIR:-$HERE/OpenXcom}"
 : "${DEVKITPRO:?DEVKITPRO is not set}"
-[ -d "$SRC/.git" ] || git clone --depth 1 https://github.com/OpenXcom/OpenXcom.git "$SRC"
+# OX-05: build the pinned upstream commit (patches/openxcom-commit.txt), never a moving master
+PIN="$(tr -d '[:space:]' < "$HERE/patches/openxcom-commit.txt")"
+if [ ! -d "$SRC/.git" ]; then
+  git init -q "$SRC" && git -C "$SRC" remote add origin https://github.com/OpenXcom/OpenXcom.git
+  git -C "$SRC" fetch -q --depth 1 origin "$PIN" && git -C "$SRC" checkout -q FETCH_HEAD
+fi
 python3 "$HERE/tools/patch_openxcom.py" "$SRC"
 if [ "${BAKE_DATA:-0}" = 1 ] && [ -d "$HERE/xcom-data/GEODATA" ]; then
   echo "BAKE_DATA=1: building your game data into the .3dsx. Do not share this file." >&2 mkdir -p "$SRC/bin/UFO" && cp -r "$HERE/xcom-data"/* "$SRC/bin/UFO/"; fi
 make -C "$SRC/src" -f Makefile.3ds -j"$(nproc)" 2>&1 | tee "$HERE/build-3ds.log"
 mkdir -p "$HERE/out/3ds/openxcom" && cp "$SRC/openxcom.3dsx" "$HERE/out/3ds/openxcom/"
+cp "$SRC/openxcom.elf" "$HERE/out/openxcom.elf" 2>/dev/null || true   # for crash addresses
 echo "done: out/3ds/openxcom/openxcom.3dsx"

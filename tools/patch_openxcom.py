@@ -286,3 +286,20 @@ rw(M,
    "#ifdef __3DS__\n\tLogger().get(LOG_INFO) << \"3ds exit\"; // one line, always (OX-04)\n#endif\n",
    "\"3ds exit\"; // one line, always (OX-04)")
 print("done")
+
+# ------------------------------------- OX-07: skip unchanged frames
+# Screen::flip asks the port whether anything changed (game surface, top panel, palettes, layout,
+# top screen mode); if not, the 8-to-32-bit blits and the present are skipped and the frame on
+# screen stays. Screen::clear forces the next frame (it clears the 32-bit screen too).
+rw(SC,
+   "void Screen::flip()\n{\n",
+   "void Screen::flip()\n{\n#ifdef __3DS__\n"
+   "\tif (!openxcom3dsFrameChanged(_screen, _surface->getSurface(), _top3ds ? _top3ds->getSurface() : 0,\n"
+   "\t                             _top3ds && openxcom3dsGameOnTop()))\n"
+   "\t\treturn; // OX-07: same frame as last time: it stays on screen\n#endif\n",
+   "OX-07: same frame as last time")
+rw(SC,
+   "void Screen::clear()\n{\n\t_surface->clear();\n",
+   "void Screen::clear()\n{\n#ifdef __3DS__\n\topenxcom3dsInvalidateFrame(); // OX-07\n#endif\n\t_surface->clear();\n",
+   "openxcom3dsInvalidateFrame(); // OX-07")
+print("done")

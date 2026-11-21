@@ -26,3 +26,7 @@ void openxcom3dsClickAt(int x, int y);       // left click at game coordinates
 // at 0. gameOnTop: rows 0-199 are the game, stretched to fill the top screen; otherwise they are
 // the info panel, 1:1. ring: draw the D-pad focus ring around the menu button under the cursor.
 void openxcom3dsPresent(SDL_Surface *scr, bool gameOnTop, bool ring = true);
+// OX-07: Screen::flip calls this first. false = nothing changed since the last frame (it has
+// already waited for the vertical blank): skip the blits and the present.
+bool openxcom3dsFrameChanged(SDL_Surface *screen, SDL_Surface *game, SDL_Surface *top, bool gameOnTop);
+void openxcom3dsInvalidateFrame();           // the next flip draws a full frame

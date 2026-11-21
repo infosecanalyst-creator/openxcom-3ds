@@ -1065,13 +1065,19 @@ void drawFocusRing(SDL_Surface *scr, int y0)
 
 // One screen: out columns x 0..outW-1 (framebuffer column-major, 240 pixels per column, bottom
 // row first), each taken from source column sxmap(x) (-1 = black) and source row offsets ymap.
+// OX-07: a column that comes from the same source column as the one before it (the top screen's
+// 800-wide mode shows each panel column twice and stretches the game 320 -> 400/800) is copied
+// from that finished column instead of being converted again: same pixels, about half the work.
 template <typename SxFn>
 void blitScreen(u8 *fb, int outW, const Uint8 *pix, const int *ymap, SxFn sxOf)
 {
+	int prevSx = -2;
 	for (int x = 0; x < outW; ++x)
 	{
 		u8 *p = fb + (x * 240 + 239) * 3;          // pixel (x, 0)
 		const int sx = sxOf(x);
+		if (sx == prevSx && x > 0) { memcpy(fb + x * 240 * 3, fb + (x - 1) * 240 * 3, 240 * 3); continue; }
+		prevSx = sx;
 		if (sx < 0) { memset(fb + x * 240 * 3, 0, 240 * 3); continue; }
 		const Uint8 *src = pix + sx * 4;
 		for (int y = 0; y < 240; ++y, p -= 3)
@@ -1085,9 +1091,87 @@ void blitScreen(u8 *fb, int outW, const Uint8 *pix, const int *ymap, SxFn sxOf)
 }
 }
 
+// ---- OX-07: skip frames that did not change ---------------------------------------------
+// Screen::flip asks first: when the game surface, the top panel, their palettes, the layout and
+// the top screen mode are all the same as last frame, the 8-to-32-bit blits and both screen
+// copies are skipped and the frame already on screen stays (the loop still waits for the
+// vertical blank, so its pace is unchanged). Anything else that draws on the screens (manual,
+// START menu: they call the presenter with ring = false), Screen::clear, a long gap between
+// frames (HOME menu, loading) and every 60th frame force a full frame.
+namespace
+{
+bool g_frameForce = true;
+std::vector<Uint8> g_prevGame, g_prevTop;
+SDL_Color g_prevPal[2][256];
+int g_prevMode = -1;
+const void *g_prevScreen = 0;
+u64 g_prevFlipTick = 0;
+int g_sinceFull = 0;
+// debug.txt only: frame-time line every 300 frames
+u64 g_workStart = 0;
+u32 g_stFrames = 0, g_stDrawn = 0;
+double g_stWorkMs = 0, g_stWorkMax = 0;
+u64 g_stStart = 0;
+const double kTicksPerMs = SYSCLOCK_ARM11 / 1000.0;
+
+bool sameSurface(SDL_Surface *s, std::vector<Uint8> &prev, SDL_Color *pal)
+{
+	if (!s || !s->pixels || s->format->BytesPerPixel != 1) return false;
+	const size_t row = (size_t)s->w, n = row * s->h;
+	bool same = prev.size() == n;
+	SDL_Palette *sp = s->format->palette;
+	const int nc = sp ? std::min(sp->ncolors, 256) : 0;
+	if (same && nc) same = memcmp(pal, sp->colors, nc * sizeof(SDL_Color)) == 0;
+	if (same)
+	{
+		for (int y = 0; y < s->h && same; ++y)
+			same = memcmp(&prev[y * row], (const Uint8 *)s->pixels + y * s->pitch, row) == 0;
+	}
+	if (!same)
+	{
+		prev.resize(n);
+		for (int y = 0; y < s->h; ++y)
+			memcpy(&prev[y * row], (const Uint8 *)s->pixels + y * s->pitch, row);
+		if (nc) memcpy(pal, sp->colors, nc * sizeof(SDL_Color));
+	}
+	return same;
+}
+}
+
+void openxcom3dsInvalidateFrame() { g_frameForce = true; }
+
+bool openxcom3dsFrameChanged(SDL_Surface *screen, SDL_Surface *game, SDL_Surface *top, bool gameOnTop)
+{
+	const u64 now = svcGetSystemTick();
+	g_workStart = now;
+	if (openxcom3dsDebugLog() && !g_stStart) g_stStart = now;
+	if (g_prevFlipTick && (double)(now - g_prevFlipTick) > 100.0 * kTicksPerMs) g_frameForce = true;
+	g_prevFlipTick = now;
+	const bool panel = top && game && top->w == game->w;
+	const int mode = (gameOnTop ? 1 : 0) | (panel ? 2 : 0) | (osGet3DSliderState() <= 0.0f ? 4 : 0);
+	bool same = !g_frameForce && screen == g_prevScreen && mode == g_prevMode && ++g_sinceFull < 60;
+	// always compare (and remember) both surfaces, so the copies are current for the next frame
+	const bool sameGame = sameSurface(game, g_prevGame, g_prevPal[0]);
+	const bool sameTop = !panel || sameSurface(top, g_prevTop, g_prevPal[1]);
+	same = same && sameGame && sameTop && gspHasGpuRight();
+	if (same)
+	{
+		if (openxcom3dsDebugLog()) ++g_stFrames;
+		gspWaitForVBlank();                    // same pace as a drawn frame
+		g_prevFlipTick = svcGetSystemTick();
+		return false;
+	}
+	g_frameForce = false;
+	g_prevScreen = screen;
+	g_prevMode = mode;
+	g_sinceFull = 0;
+	return true;
+}
+
 void openxcom3dsPresent(SDL_Surface *scr, bool gameOnTop, bool ring)
 {
-	if (!scr || !scr->pixels || !gspHasGpuRight()) return;
+	if (!ring) g_frameForce = true;            // manual / START menu drew over the frame
+	if (!scr || !scr->pixels || !gspHasGpuRight()) { g_frameForce = true; return; }
 	if (!g_presentInit)
 	{
 		g_presentInit = true;
@@ -1136,8 +1220,27 @@ void openxcom3dsPresent(SDL_Surface *scr, bool gameOnTop, bool ring)
 
 	if (SDL_MUSTLOCK(scr)) SDL_UnlockSurface(scr);
 	gfxFlushBuffers();
+	if (ring && openxcom3dsDebugLog() && g_workStart)   // frame-time line (debug.txt only)
+	{
+		const double ms = (double)(svcGetSystemTick() - g_workStart) / kTicksPerMs;
+		g_stWorkMs += ms;
+		if (ms > g_stWorkMax) g_stWorkMax = ms;
+		++g_stDrawn;
+		++g_stFrames;
+	}
 	gfxSwapBuffers();
 	gspWaitForVBlank();
+	if (openxcom3dsDebugLog() && g_stFrames >= 300)
+	{
+		const double secs = (double)(svcGetSystemTick() - g_stStart) / (kTicksPerMs * 1000.0);
+		OpenXcom::Logger().get(OpenXcom::LOG_INFO) << "frame: " << g_stFrames << " frames in " << secs
+			<< " s, drawn " << g_stDrawn << ", skipped " << (g_stFrames - g_stDrawn)
+			<< ", draw avg " << (g_stDrawn ? g_stWorkMs / g_stDrawn : 0.0) << " ms, max " << g_stWorkMax << " ms";
+		g_stFrames = g_stDrawn = 0;
+		g_stWorkMs = g_stWorkMax = 0;
+		g_stStart = svcGetSystemTick();
+	}
+	g_workStart = 0;
 }
 
 // Battle (the main battlescape view): game on the top screen, the battle pad

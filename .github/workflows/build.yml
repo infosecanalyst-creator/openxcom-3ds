@@ -23,6 +23,7 @@ jobs:
           mkdir -p pub
           cp out/3ds/openxcom.3dsx build.log build-3ds.log image.log pub/ 2>/dev/null || true
           [ -f out/openxcom.elf ] && gzip -9c out/openxcom.elf > pub/openxcom.elf.gz || true
+          [ -f out/openxcom.elf ] && docker run --rm -v "$PWD:/work" openxcom-3ds sh -c 'arm-none-eabi-nm -C -n out/openxcom.elf || $DEVKITARM/bin/arm-none-eabi-nm -C -n out/openxcom.elf' | gzip -9 > pub/openxcom.sym.gz || true
           echo "$GITHUB_SHA" > pub/SOURCE_COMMIT
           sudo chown -R "$USER" out || true; rm -rf out && mv pub out
       - name: Publish to builds branch

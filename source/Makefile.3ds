@@ -35,10 +35,14 @@ OBJS     += $(OBJDIR)selftest3ds.o
 LIBS     := -lSDL_gfx -lSDL_mixer -lSDL_image -lSDL -lyaml-cpp \
             -lpng -ljpeg -lz -lvorbisidec -logg -lmikmod -lmad -lcitro3d -lctru -lm
 
+# Port version for the main menu's version line: git describe of openxcom-3ds (build-3ds.sh
+# passes it; here we are inside the upstream OpenXcom clone, whose commit is only the pin).
+PORT_VERSION ?= unknown
+
 all: git_version.h $(BIN).3dsx
 
 git_version.h: git_version.h.in
-	sed 's/@OPENXCOM_VERSION_STRING@/ 3ds-$(shell git -C .. rev-parse --short HEAD 2>/dev/null || echo src)/' $< > $@
+	sed 's/@OPENXCOM_VERSION_STRING@/ 3ds-$(PORT_VERSION)/' $< > $@
 
 $(BIN).elf: $(OBJS)
 	$(CXX) $(OBJS) $(LDFLAGS) $(LIBS) -o $@

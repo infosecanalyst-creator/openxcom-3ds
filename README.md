@@ -82,7 +82,7 @@ touch screen), and the port puts it on the screens itself instead of SDL_Flip
   800x240 wide mode (`gfxSetWide`), so every real column is drawn; with the
   slider up it goes back to 400x240. The info panel stays 1:1 (2:1 across in
   wide mode) so its text keeps whole pixels.
-- Touch screen: 320x200 at 1:1, centred.
+- Touch screen (game on top): the battle pad / touchpad as described below. When the game is on the touch screen, its 320x200 is stretched to 320x240 (X-COM's real 4:3 look), no black bars.
 
 **Game on the top screen, touch screen as a touchpad:** apart from the pad's own
 buttons, sliding on the touch screen moves the game's cursor (relative, like a
@@ -128,7 +128,7 @@ how the layout and input are tested before hardware.
 ## In-game manual
 
 Start opens the port menu (RESUME, MANUAL, QUICK SAVE, QUICK LOAD, GAME OPTIONS,
-EXIT GAME; EXIT GAME quick-saves a game in progress first and asks before quitting).
+EXIT GAME; EXIT GAME and HOME > Close quick-save a game in progress first and ask before quitting if that save fails; in a battle the save is refused during the alien turn or mid-action and says so. QUICK LOAD asks first, with NO selected).
 MANUAL opens the built-in manual (text on the top screen, section buttons on
 the touch screen; Circle Pad / C-Stick scroll, D-pad moves between sections,
 L/R change section, B or Start closes). The main menu's version line shows the

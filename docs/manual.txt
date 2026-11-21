@@ -7,7 +7,7 @@ The game has two halves:
 - The Geoscape: the world map, where time passes, UFOs appear and you run your bases.
 - The Battlescape: turn-based ground combat with your soldiers.
 
-Press Start at any time for the menu: Resume, Manual, Quick Save, Quick Load, Game Options and Exit Game. The game waits underneath.
+Press Start at any time for the menu: Resume, Manual, Quick Save, Quick Load, Game Options and Exit Game. The game waits underneath. See Saving and loading for what each one does.
 
 ## Using this manual
 - Circle Pad or C-Stick up/down: scroll the text (hold to keep scrolling).
@@ -27,7 +27,7 @@ The battle fills the whole top screen.
 Windows that need the stylus (inventory, the fire-mode menu, messages) come down to the touch screen by themselves and go back up when they close.
 
 ## Geoscape, bases and menus
-The game is on the touch screen: tap it with the stylus as if it were a mouse. The top screen shows what you would otherwise open a window for: date, funds, UFOs on radar, research and manufacture, each base's staff and craft.
+The game is on the touch screen and fills it from edge to edge (no black bars): tap it with the stylus as if it were a mouse. The top screen shows what you would otherwise open a window for: date, funds, UFOs on radar, research and manufacture, each base's staff and craft.
 
 ## ZL: swap
 ZL (or the Swap button) puts the game on the other screen, at any time. The game then fills the top screen, and the touch screen (apart from its Swap button) is a touchpad: slide to move the cursor, tap to click where it points, hold R and tap for a right click. While the game is on top, R does its own job (next soldier, zoom in) when you let go of it, unless you tapped with it.
@@ -65,7 +65,7 @@ When a name field opens (a new base, a soldier, a save), the 3DS keyboard appear
 | Y | Globe: bases. Battle: kneel
 | ZR | Battle: view level up (hold: down)
 | ZL | Swap the screens
-| Start | Menu (manual, quick save and load, options, exit)
+| Start | Menu (manual, quick save, quick load, options, exit)
 
 # Starting a campaign
 1. Choose New Game and a difficulty. Beginner is a good first choice.
@@ -155,6 +155,15 @@ Before a mission, Equip Craft lets you load the Skyranger. In battle, tap the so
 Everything you research unlocks entries in the Ufopaedia: weapons, armour, craft, aliens and facilities. Open it from the Geoscape button or the battle menu. It explains what each new item does.
 
 # Saving and loading
+## The Start menu
+Start opens a menu of big buttons: RESUME, MANUAL, QUICK SAVE, QUICK LOAD, GAME OPTIONS and EXIT GAME. Tap one, or use the D-pad and A. B or Start closes it. On the main menu, QUICK SAVE, QUICK LOAD and GAME OPTIONS are greyed out because there is no game to save yet.
+- QUICK SAVE writes the quick save slot.
+- QUICK LOAD asks first ("Load the quick save?"). The choice starts on NO; YES loads it and you lose progress since it was saved.
+- EXIT GAME quick-saves a game in progress first, then quits. If the save fails (SD card full?) it says SAVE FAILED and asks before quitting.
+- In a battle, the exit save is made only at a quiet moment of your own turn. During the alien turn or while an action is still playing out it says NOT SAVED and why, leaves the old quick save as it was, and asks before quitting. Wait for your turn and try again.
+- Closing the game from the HOME menu does the same as EXIT GAME.
+
+## Saving by hand
 - Geoscape: Options, then Save Game or Load Game.
 - Battle: open the menu button on the HUD, then Save.
 - Autosave is on: the game saves at the start of each month and each mission.
@@ -174,3 +183,5 @@ Saves live in sdmc:/3ds/openxcom/user/ on the SD card.
 - Cursor stuck: touch the screen once; the cursor jumps to the stylus (with the game on top, slide on the touch screen).
 - No music: the 3DS cannot play MIDI. The AdLib soundtrack needs 16-bit audio, which is the default.
 - Replace this manual: put your own manual.txt in sdmc:/3ds/openxcom/.
+- Program: sdmc:/3ds/openxcom.3dsx (directly in /3ds). Game data, saves and options live in sdmc:/3ds/openxcom/.
+- Log: sdmc:/3ds/openxcom/user/openxcom.log holds warnings, errors, and start and exit lines. To record every tap and key, create an empty file sdmc:/3ds/openxcom/debug.txt (it slows the game a little; the log rolls over at 1 MB). Delete the file to switch it off.

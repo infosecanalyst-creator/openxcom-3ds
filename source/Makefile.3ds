@@ -22,10 +22,15 @@ BIN     := ../openxcom
 
 ARCH     := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 CXXFLAGS ?= -O2
-CXXFLAGS += $(ARCH) -D__3DS__ -DARM11 -D__NO_OPENGL -D_GNU_SOURCE -std=gnu++11 -w \
+CXXFLAGS += $(ARCH) -D__3DS__ -DARM11 -D__NO_OPENGL -D_GNU_SOURCE -std=gnu++11 \
             -ffunction-sections -fdata-sections -mword-relocations \
             -I$(PORTLIBS)/include -I$(PORTLIBS)/include/SDL -I$(CTRULIB)/include \
             -include 3ds/mouse3ds.h
+# Warnings: the port's own files (3ds/*.cpp) build with -Wall and show every warning; the
+# upstream OpenXcom sources keep -w (old-C++ warnings that are not ours to fix).
+PORT_OBJS := $(patsubst %.cpp,$(OBJDIR)%.o,$(notdir $(wildcard 3ds/*.cpp)))
+$(filter-out $(PORT_OBJS),$(OBJS)): CXXFLAGS += -w
+$(PORT_OBJS): CXXFLAGS += -Wall
 LDFLAGS  := -specs=3dsx.specs $(ARCH) -Wl,--gc-sections -L$(PORTLIBS)/lib -L$(CTRULIB)/lib
 # Hardware test hooks (3ds-test-suite hwtest/selftest): inactive unless the test agent
 # starts the game with --selftest=<script>.

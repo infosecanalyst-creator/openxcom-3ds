@@ -7,6 +7,7 @@
 - Long names are cut with "..." at a letter boundary instead of mid-letter.
 - QUICK LOAD in the Start menu asks "Load the quick save?" first, with NO selected.
 - Smoother and faster: frames that did not change are skipped, and the D-pad focus ring redraws with the cursor.
+- Closing the manual with B no longer also presses B in the game (on the Geoscape it opened the Options box).
 
 ## 2026-11-20
 

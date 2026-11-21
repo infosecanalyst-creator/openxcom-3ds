@@ -492,6 +492,7 @@ void runManual()
 	                      | SDL_EVENTMASK(SDL_MOUSEBUTTONDOWN) | SDL_EVENTMASK(SDL_MOUSEBUTTONUP)) > 0)
 		;
 	g_lastTick = 0;                            // no cursor jump from the long frame
+	g_padPrevHeld = hidKeysHeld();             // B / START still held from closing the manual is not a new press (it opened Options on the Geoscape)
 }
 }
 

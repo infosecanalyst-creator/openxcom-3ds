@@ -72,7 +72,7 @@ with `-e BAKE_DATA=1`. **That file then contains the game itself: keep it on you
 Same rule as the Freeciv port: **the game you touch is on the bottom screen,
 the top screen is for glancing at.** Battles are the exception: the game goes
 on the top screen and the touch screen becomes the battle pad. ZL swaps at any
-time. The game composes one 320x400 SDL surface (rows 0-199 top, rows 200-399
+time (the touch screen's Swap button does the same). The game composes one 320x400 SDL surface (rows 0-199 top, rows 200-399
 touch screen), and the port puts it on the screens itself instead of SDL_Flip
 (`openxcom3dsPresent` in `src/3ds/platform3ds.cpp`):
 
@@ -114,8 +114,7 @@ held). The Circle Pad moves the cursor on whichever screen the game is on.
 | ZR | - | - | view level up (tap) / down (hold) |
 | ZL | swap screens | swap screens | swap screens |
 | Touch, game on top | touchpad (slide, tap; R + tap = right click) | same | same; tap the close-up map to click a square |
-| Start | instruction manual | instruction manual | instruction manual |
-| Select | swap screens (same as ZL) | swap screens | swap screens |
+| Start | port menu (QUICK SAVE, QUICK LOAD and GAME OPTIONS greyed out) | port menu: RESUME, MANUAL, QUICK SAVE, QUICK LOAD, GAME OPTIONS, EXIT GAME | same as Geoscape |
 
 Input notes: 3ds-sdl's own touch-to-mouse events are dropped (in dual-screen
 mode it clamps the touch position to the top half). The touch screen is read
@@ -128,9 +127,12 @@ how the layout and input are tested before hardware.
 
 ## In-game manual
 
-Start opens a built-in manual (text on the top screen, section buttons on
+Start opens the port menu (RESUME, MANUAL, QUICK SAVE, QUICK LOAD, GAME OPTIONS,
+EXIT GAME; EXIT GAME quick-saves a game in progress first and asks before quitting).
+MANUAL opens the built-in manual (text on the top screen, section buttons on
 the touch screen; Circle Pad / C-Stick scroll, D-pad moves between sections,
-L/R change section, B or Start closes). The game waits while it is open. The text is `docs/manual.txt`,
+L/R change section, B or Start closes). The main menu's version line shows the
+port's build (`3ds-<commit>`). The game waits while it is open. The text is `docs/manual.txt`,
 compiled into `src/3ds/manual_text.h`; a `manual.txt` in
 `sdmc:/3ds/openxcom/` replaces it without rebuilding.
 

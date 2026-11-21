@@ -1149,7 +1149,12 @@ bool openxcom3dsFrameChanged(SDL_Surface *screen, SDL_Surface *game, SDL_Surface
 	g_prevFlipTick = now;
 	const bool panel = top && game && top->w == game->w;
 	const int mode = (gameOnTop ? 1 : 0) | (panel ? 2 : 0) | (osGet3DSliderState() <= 0.0f ? 4 : 0);
-	bool same = !g_frameForce && screen == g_prevScreen && mode == g_prevMode && ++g_sinceFull < 60;
+	// the D-pad focus ring follows the port's cursor position, which a hidden game cursor
+	// would not show in the game surface: a cursor move is a change too
+	static float prevCx = -1, prevCy = -1;
+	const bool cursorMoved = g_cx != prevCx || g_cy != prevCy;
+	prevCx = g_cx; prevCy = g_cy;
+	bool same = !g_frameForce && !cursorMoved && screen == g_prevScreen && mode == g_prevMode && ++g_sinceFull < 60;
 	// always compare (and remember) both surfaces, so the copies are current for the next frame
 	const bool sameGame = sameSurface(game, g_prevGame, g_prevPal[0]);
 	const bool sameTop = !panel || sameSurface(top, g_prevTop, g_prevPal[1]);

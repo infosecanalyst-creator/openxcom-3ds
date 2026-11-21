@@ -17,6 +17,7 @@ python3 "$HERE/tools/patch_openxcom.py" "$SRC"
 if [ "${BAKE_DATA:-0}" = 1 ] && [ -d "$HERE/xcom-data/GEODATA" ]; then
   echo "BAKE_DATA=1: building your game data into the .3dsx. Do not share this file." >&2 mkdir -p "$SRC/bin/UFO" && cp -r "$HERE/xcom-data"/* "$SRC/bin/UFO/"; fi
 make -C "$SRC/src" -f Makefile.3ds -j"$(nproc)" 2>&1 | tee "$HERE/build-3ds.log"
-mkdir -p "$HERE/out/3ds/openxcom" && cp "$SRC/openxcom.3dsx" "$HERE/out/3ds/openxcom/"
+# the .3dsx lives directly in /3ds on the card (sdmc:/3ds/openxcom.3dsx); data stays in /3ds/openxcom/
+mkdir -p "$HERE/out/3ds" && cp "$SRC/openxcom.3dsx" "$HERE/out/3ds/"
 cp "$SRC/openxcom.elf" "$HERE/out/openxcom.elf" 2>/dev/null || true   # for crash addresses
-echo "done: out/3ds/openxcom/openxcom.3dsx"
+echo "done: out/3ds/openxcom.3dsx"

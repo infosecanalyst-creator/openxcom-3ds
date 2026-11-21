@@ -16,12 +16,12 @@ jobs:
         run: docker build -t openxcom-3ds . 2>&1 | tee image.log; test ${PIPESTATUS[0]} -eq 0
         shell: bash
       - name: Build
-        run: docker run --rm -v "$PWD:/work" openxcom-3ds ./build-3ds.sh 2>&1 | tee build.log; test -f out/3ds/openxcom/openxcom.3dsx
+        run: docker run --rm -v "$PWD:/work" openxcom-3ds ./build-3ds.sh 2>&1 | tee build.log; test -f out/3ds/openxcom.3dsx
       - name: Collect
         if: always()
         run: |
           mkdir -p pub
-          cp out/3ds/openxcom/openxcom.3dsx build.log build-3ds.log image.log pub/ 2>/dev/null || true
+          cp out/3ds/openxcom.3dsx build.log build-3ds.log image.log pub/ 2>/dev/null || true
           [ -f out/openxcom.elf ] && gzip -9c out/openxcom.elf > pub/openxcom.elf.gz || true
           echo "$GITHUB_SHA" > pub/SOURCE_COMMIT
           sudo chown -R "$USER" out || true; rm -rf out && mv pub out

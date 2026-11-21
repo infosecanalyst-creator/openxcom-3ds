@@ -57,7 +57,7 @@ docker build -t openxcom-3ds .          # ~15 min: image + SDL_gfx + yaml-cpp fo
 docker run --rm -v "${PWD}:/work" openxcom-3ds ./build-3ds.sh
 ```
 
-`out/3ds/openxcom/openxcom.3dsx` → `sdmc:/3ds/openxcom/`, and copy the GEODATA
+`out/3ds/openxcom.3dsx` → `sdmc:/3ds/openxcom.3dsx` (directly in `/3ds`), and copy the GEODATA
 GEOGRAPH MAPS ROUTES SOUND TERRAIN UFOGRAPH UNITS folders from your own copy of the
 game to `sdmc:/3ds/openxcom/UFO/`. Saves and `options.cfg` live in
 `sdmc:/3ds/openxcom/user/`.

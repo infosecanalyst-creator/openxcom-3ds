@@ -437,7 +437,7 @@ void runManual()
 		manual3ds::Input mi;
 		g_manual.set_pixel_scale_y(240.0f / 200.0f);   // the 200-row canvas is shown 240 tall
 		g_manual.set_toggle(g_lefty ? "Left hand: on" : "Left hand: off");
-		g_manual.set_footer(g_lefty ? "Stick: scroll   A/B/X/Y: section   D-Down: close" : "");
+		g_manual.set_footer(g_lefty ? "Sticks: scroll   A/B/X/Y, L / R: section   D-Down / START: close" : "");
 		static const struct { u32 b; uint32_t k; bool rep; } map[] = {
 			{ KEY_DUP, manual3ds::K_UP, true }, { KEY_DDOWN, manual3ds::K_DOWN, true },
 			{ KEY_CSTICK_UP, manual3ds::K_SCROLL_UP, true }, { KEY_CSTICK_DOWN, manual3ds::K_SCROLL_DOWN, true },

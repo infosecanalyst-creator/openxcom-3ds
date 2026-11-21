@@ -1,0 +1,678 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 896B done
+#1 DONE 0.0s
+
+#2 [auth] devkitpro/devkitarm:pull token for registry-1.docker.io
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/devkitpro/devkitarm:20260610
+#3 DONE 0.7s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 2.17kB done
+#5 DONE 0.0s
+
+#6 [1/6] FROM docker.io/devkitpro/devkitarm:20260610@sha256:116afba8df8453961de2936ffab20dd441edf4d682856c1ec8b0e53d7ed0bbf5
+#6 resolve docker.io/devkitpro/devkitarm:20260610@sha256:116afba8df8453961de2936ffab20dd441edf4d682856c1ec8b0e53d7ed0bbf5 0.0s done
+#6 sha256:3c5026e520aeec9e208399f6d0a62098d5ee4c13d8cca97cdb9adbc6bb56a1c0 4.19MB / 215.13MB 0.2s
+#6 sha256:3c5026e520aeec9e208399f6d0a62098d5ee4c13d8cca97cdb9adbc6bb56a1c0 32.51MB / 215.13MB 0.3s
+#6 sha256:ea5d3216df1fb580c54c016ee13ff58eb965c0a0b0ef08afd8dfd5a1c03e95a8 1.05MB / 28.38MB 0.2s
+#6 sha256:74701f26999d7854982cfa51dafd83beeaf644031b943c4cbd0a245139a742a4 0B / 265.08MB 0.2s
+#6 sha256:59e22667830bf04fb35e15ed9c70023e9d121719bb87f0db7f3159ee7c7e0b8d 0B / 28.23MB 0.2s
+#6 sha256:ea5d3216df1fb580c54c016ee13ff58eb965c0a0b0ef08afd8dfd5a1c03e95a8 28.38MB / 28.38MB 0.3s done
+#6 sha256:74701f26999d7854982cfa51dafd83beeaf644031b943c4cbd0a245139a742a4 13.63MB / 265.08MB 0.3s
+#6 sha256:59e22667830bf04fb35e15ed9c70023e9d121719bb87f0db7f3159ee7c7e0b8d 28.23MB / 28.23MB 0.4s done
+#6 sha256:3c5026e520aeec9e208399f6d0a62098d5ee4c13d8cca97cdb9adbc6bb56a1c0 88.08MB / 215.13MB 0.6s
+#6 sha256:74701f26999d7854982cfa51dafd83beeaf644031b943c4cbd0a245139a742a4 44.04MB / 265.08MB 0.5s
+#6 extracting sha256:59e22667830bf04fb35e15ed9c70023e9d121719bb87f0db7f3159ee7c7e0b8d
+#6 sha256:3c5026e520aeec9e208399f6d0a62098d5ee4c13d8cca97cdb9adbc6bb56a1c0 124.78MB / 215.13MB 0.8s
+#6 sha256:74701f26999d7854982cfa51dafd83beeaf644031b943c4cbd0a245139a742a4 70.25MB / 265.08MB 0.6s
+#6 sha256:3c5026e520aeec9e208399f6d0a62098d5ee4c13d8cca97cdb9adbc6bb56a1c0 157.29MB / 215.13MB 0.9s
+#6 sha256:74701f26999d7854982cfa51dafd83beeaf644031b943c4cbd0a245139a742a4 103.81MB / 265.08MB 0.8s
+#6 sha256:3c5026e520aeec9e208399f6d0a62098d5ee4c13d8cca97cdb9adbc6bb56a1c0 189.79MB / 215.13MB 1.1s
+#6 sha256:74701f26999d7854982cfa51dafd83beeaf644031b943c4cbd0a245139a742a4 135.27MB / 265.08MB 0.9s
+#6 sha256:3c5026e520aeec9e208399f6d0a62098d5ee4c13d8cca97cdb9adbc6bb56a1c0 215.13MB / 215.13MB 1.2s
+#6 sha256:74701f26999d7854982cfa51dafd83beeaf644031b943c4cbd0a245139a742a4 169.87MB / 265.08MB 1.1s
+#6 sha256:74701f26999d7854982cfa51dafd83beeaf644031b943c4cbd0a245139a742a4 206.57MB / 265.08MB 1.2s
+#6 sha256:74701f26999d7854982cfa51dafd83beeaf644031b943c4cbd0a245139a742a4 257.95MB / 265.08MB 1.4s
+#6 extracting sha256:59e22667830bf04fb35e15ed9c70023e9d121719bb87f0db7f3159ee7c7e0b8d 2.0s done
+#6 sha256:3c5026e520aeec9e208399f6d0a62098d5ee4c13d8cca97cdb9adbc6bb56a1c0 215.13MB / 215.13MB 2.4s done
+#6 sha256:74701f26999d7854982cfa51dafd83beeaf644031b943c4cbd0a245139a742a4 265.08MB / 265.08MB 2.4s done
+#6 extracting sha256:74701f26999d7854982cfa51dafd83beeaf644031b943c4cbd0a245139a742a4
+#6 extracting sha256:74701f26999d7854982cfa51dafd83beeaf644031b943c4cbd0a245139a742a4 4.4s done
+#6 DONE 6.9s
+
+#6 [1/6] FROM docker.io/devkitpro/devkitarm:20260610@sha256:116afba8df8453961de2936ffab20dd441edf4d682856c1ec8b0e53d7ed0bbf5
+#6 extracting sha256:ea5d3216df1fb580c54c016ee13ff58eb965c0a0b0ef08afd8dfd5a1c03e95a8
+#6 extracting sha256:ea5d3216df1fb580c54c016ee13ff58eb965c0a0b0ef08afd8dfd5a1c03e95a8 0.3s done
+#6 DONE 7.1s
+
+#6 [1/6] FROM docker.io/devkitpro/devkitarm:20260610@sha256:116afba8df8453961de2936ffab20dd441edf4d682856c1ec8b0e53d7ed0bbf5
+#6 extracting sha256:3c5026e520aeec9e208399f6d0a62098d5ee4c13d8cca97cdb9adbc6bb56a1c0
+#6 extracting sha256:3c5026e520aeec9e208399f6d0a62098d5ee4c13d8cca97cdb9adbc6bb56a1c0 3.2s done
+#6 DONE 10.3s
+
+#7 [2/6] RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends         build-essential git cmake pkg-config python3 curl ca-certificates && rm -rf /var/lib/apt/lists/*
+#7 0.251 Get:1 http://deb.debian.org/debian bookworm-backports InRelease [59.4 kB]
+#7 0.273 Get:2 http://deb.debian.org/debian bookworm InRelease [151 kB]
+#7 0.293 Get:3 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+#7 0.304 Get:4 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+#7 0.370 Get:5 http://deb.debian.org/debian bookworm-backports/main amd64 Packages.diff/Index [63.3 kB]
+#7 0.371 Ign:5 http://deb.debian.org/debian bookworm-backports/main amd64 Packages.diff/Index
+#7 0.384 Get:6 http://deb.debian.org/debian bookworm-backports/main amd64 Packages [300 kB]
+#7 0.433 Get:7 http://deb.debian.org/debian bookworm/main amd64 Packages [8,790 kB]
+#7 0.502 Get:8 http://deb.debian.org/debian bookworm-updates/main amd64 Packages.diff/Index [21.8 kB]
+#7 0.503 Ign:8 http://deb.debian.org/debian bookworm-updates/main amd64 Packages.diff/Index
+#7 0.513 Get:9 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6,924 B]
+#7 0.513 Hit:10 https://apt.devkitpro.org stable InRelease
+#7 0.542 Get:11 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [378 kB]
+#7 1.275 Fetched 9,862 kB in 1s (9,373 kB/s)
+#7 1.275 Reading package lists...
+#7 1.720 Reading package lists...
+#7 2.174 Building dependency tree...
+#7 2.274 Reading state information...
+#7 2.369 build-essential is already the newest version (12.9).
+#7 2.369 cmake is already the newest version (3.31.6-2~bpo12+1).
+#7 2.369 pkg-config is already the newest version (1.8.1-1).
+#7 2.369 python3 is already the newest version (3.11.2-1+b1).
+#7 2.369 The following additional packages will be installed:
+#7 2.369   git-man libcurl3-gnutls libcurl4
+#7 2.370 Suggested packages:
+#7 2.370   git-daemon-run | git-daemon-sysvinit git-doc git-email git-gui gitk gitweb
+#7 2.370   git-cvs git-mediawiki git-svn
+#7 2.370 Recommended packages:
+#7 2.370   less ssh-client
+#7 2.397 The following packages will be upgraded:
+#7 2.397   ca-certificates curl git git-man libcurl3-gnutls libcurl4
+#7 2.446 6 upgraded, 0 newly installed, 0 to remove and 77 not upgraded.
+#7 2.446 Need to get 10.6 MB of archives.
+#7 2.446 After this operation, 2,048 B of additional disk space will be used.
+#7 2.446 Get:1 http://deb.debian.org/debian-security bookworm-security/main amd64 ca-certificates all 20250419~deb12u2 [161 kB]
+#7 2.474 Get:2 http://deb.debian.org/debian bookworm/main amd64 curl amd64 7.88.1-10+deb12u15 [316 kB]
+#7 2.485 Get:3 http://deb.debian.org/debian bookworm/main amd64 libcurl4 amd64 7.88.1-10+deb12u15 [392 kB]
+#7 2.493 Get:4 http://deb.debian.org/debian bookworm/main amd64 libcurl3-gnutls amd64 7.88.1-10+deb12u15 [386 kB]
+#7 2.496 Get:5 http://deb.debian.org/debian bookworm/main amd64 git-man all 1:2.39.5-0+deb12u3 [2,053 kB]
+#7 2.520 Get:6 http://deb.debian.org/debian bookworm/main amd64 git amd64 1:2.39.5-0+deb12u3 [7,264 kB]
+#7 3.086 Preconfiguring packages ...
+#7 3.556 Fetched 10.6 MB in 0s (73.9 MB/s)
+#7 3.571 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 21137 files and directories currently installed.)
+#7 3.586 Preparing to unpack .../0-ca-certificates_20250419~deb12u2_all.deb ...
+#7 3.590 Unpacking ca-certificates (20250419~deb12u2) over (20230311+deb12u1) ...
+#7 3.718 Preparing to unpack .../1-curl_7.88.1-10+deb12u15_amd64.deb ...
+#7 3.721 Unpacking curl (7.88.1-10+deb12u15) over (7.88.1-10+deb12u12) ...
+#7 3.755 Preparing to unpack .../2-libcurl4_7.88.1-10+deb12u15_amd64.deb ...
+#7 3.758 Unpacking libcurl4:amd64 (7.88.1-10+deb12u15) over (7.88.1-10+deb12u12) ...
+#7 3.797 Preparing to unpack .../3-libcurl3-gnutls_7.88.1-10+deb12u15_amd64.deb ...
+#7 3.800 Unpacking libcurl3-gnutls:amd64 (7.88.1-10+deb12u15) over (7.88.1-10+deb12u12) ...
+#7 3.838 Preparing to unpack .../4-git-man_1%3a2.39.5-0+deb12u3_all.deb ...
+#7 3.840 Unpacking git-man (1:2.39.5-0+deb12u3) over (1:2.39.5-0+deb12u2) ...
+#7 3.929 Preparing to unpack .../5-git_1%3a2.39.5-0+deb12u3_amd64.deb ...
+#7 3.943 Unpacking git (1:2.39.5-0+deb12u3) over (1:2.39.5-0+deb12u2) ...
+#7 4.350 Setting up libcurl3-gnutls:amd64 (7.88.1-10+deb12u15) ...
+#7 4.353 Setting up ca-certificates (20250419~deb12u2) ...
+#7 6.011 Updating certificates in /etc/ssl/certs...
+#7 6.768 rehash: warning: skipping ca-certificates.crt,it does not contain exactly one certificate or CRL
+#7 6.773 21 added, 15 removed; done.
+#7 7.018 Setting up libcurl4:amd64 (7.88.1-10+deb12u15) ...
+#7 7.064 Setting up git-man (1:2.39.5-0+deb12u3) ...
+#7 7.204 Setting up curl (7.88.1-10+deb12u15) ...
+#7 7.319 Setting up git (1:2.39.5-0+deb12u3) ...
+#7 7.462 Processing triggers for libc-bin (2.36-9+deb12u10) ...
+#7 7.520 Processing triggers for ca-certificates (20250419~deb12u2) ...
+#7 7.525 Updating certificates in /etc/ssl/certs...
+#7 8.002 0 added, 0 removed; done.
+#7 8.002 Running hooks in /etc/ca-certificates/update.d...
+#7 8.003 done.
+#7 DONE 8.2s
+
+#8 [3/6] RUN dkp-pacman -Sy --noconfirm 3ds-dev dkp-toolchain-vars 3ds-sdl 3ds-sdl_mixer 3ds-sdl_image         3ds-libpng 3ds-zlib 3ds-libogg 3ds-libvorbisidec 3ds-mikmod && dkp-pacman -Scc --noconfirm
+#8 0.174 :: Synchronizing package databases...
+#8 3.433  dkp-libs downloading...
+#8 3.433  dkp-linux downloading...
+#8 3.459 :: There are 20 members in group 3ds-dev:
+#8 3.459 :: Repository dkp-libs
+#8 3.459    1) 3ds-cmake  2) 3ds-examples  3) 3ds-pkg-config  4) catnip  5) citro2d  6) citro3d  7) devkitARM  8) devkitarm-cmake  9) devkitarm-crtls  10) devkitarm-newlib  11) libctru
+#8 3.459 :: Repository dkp-linux
+#8 3.459    12) 3dslink  13) 3dstools  14) devkit-env  15) devkitARM-gdb  16) devkitarm-binutils  17) devkitarm-gcc  18) general-tools  19) picasso  20) tex3ds
+#8 3.459 
+#8 3.459 Enter a selection (default=all): warning: 3ds-cmake-1.5.2-1 is up to date -- reinstalling
+#8 3.460 warning: 3ds-examples-20240917-1 is up to date -- reinstalling
+#8 3.460 warning: 3ds-pkg-config-0.28-5 is up to date -- reinstalling
+#8 3.460 warning: catnip-0.2.0-1 is up to date -- reinstalling
+#8 3.460 warning: citro2d-1.7.0-1 is up to date -- reinstalling
+#8 3.460 warning: citro3d-1.7.1-2 is up to date -- reinstalling
+#8 3.460 warning: devkitARM-r68-1 is up to date -- reinstalling
+#8 3.460 warning: devkitarm-cmake-1.2.4-1 is up to date -- reinstalling
+#8 3.460 warning: devkitarm-crtls-1.2.6-1 is up to date -- reinstalling
+#8 3.460 warning: devkitarm-newlib-4.6.0.20260123-5 is up to date -- reinstalling
+#8 3.460 warning: 3dslink-0.6.3-1 is up to date -- reinstalling
+#8 3.460 warning: 3dstools-1.3.1-3 is up to date -- reinstalling
+#8 3.460 warning: devkit-env-1.0.1-2 is up to date -- reinstalling
+#8 3.460 warning: devkitARM-gdb-14.1-2 is up to date -- reinstalling
+#8 3.460 warning: devkitarm-binutils-2.46.0-1 is up to date -- reinstalling
+#8 3.460 warning: devkitarm-gcc-16.1.0-1 is up to date -- reinstalling
+#8 3.460 warning: general-tools-1.4.4-1 is up to date -- reinstalling
+#8 3.460 warning: picasso-2.7.2-3 is up to date -- reinstalling
+#8 3.460 warning: tex3ds-2.3.0-4 is up to date -- reinstalling
+#8 3.460 warning: dkp-toolchain-vars-1.0.5-1 is up to date -- reinstalling
+#8 3.460 warning: 3ds-sdl-1.2.15-19 is up to date -- reinstalling
+#8 3.460 warning: 3ds-sdl_mixer-1.2.12-9 is up to date -- reinstalling
+#8 3.460 warning: 3ds-sdl_image-1.2.12-3 is up to date -- reinstalling
+#8 3.460 warning: 3ds-libpng-1.6.53-1 is up to date -- reinstalling
+#8 3.460 warning: 3ds-zlib-1.3.1-1 is up to date -- reinstalling
+#8 3.460 warning: 3ds-libogg-1.3.6-1 is up to date -- reinstalling
+#8 3.460 warning: 3ds-libvorbisidec-1.2.1-3 is up to date -- reinstalling
+#8 3.460 warning: 3ds-mikmod-3.3.13-1 is up to date -- reinstalling
+#8 3.461 
+#8 3.461 resolving dependencies...
+#8 3.463 looking for conflicting packages...
+#8 3.465 
+#8 3.465 Packages (29) 3ds-cmake-1.5.2-1  3ds-examples-20240917-1  3ds-libogg-1.3.6-1  3ds-libpng-1.6.53-1  3ds-libvorbisidec-1.2.1-3  3ds-mikmod-3.3.13-1  3ds-pkg-config-0.28-5  3ds-sdl-1.2.15-19  3ds-sdl_image-1.2.12-3  3ds-sdl_mixer-1.2.12-9  3ds-zlib-1.3.1-1  3dslink-0.6.3-1  3dstools-1.3.1-3  catnip-0.2.0-1  citro2d-1.7.0-1  citro3d-1.7.1-2  devkit-env-1.0.1-2  devkitARM-r68-1  devkitARM-gdb-14.1-2  devkitarm-binutils-2.46.0-1  devkitarm-cmake-1.2.4-1  devkitarm-crtls-1.2.6-1  devkitarm-gcc-16.1.0-1  devkitarm-newlib-4.6.0.20260123-5  dkp-toolchain-vars-1.0.5-1  general-tools-1.4.4-1  libctru-2.7.1-1  picasso-2.7.2-3  tex3ds-2.3.0-4
+#8 3.465 
+#8 3.465 Total Download Size:   107.22 MiB
+#8 3.465 Total Installed Size:  419.43 MiB
+#8 3.465 Net Upgrade Size:        0.38 MiB
+#8 3.465 
+#8 3.465 :: Proceed with installation? [Y/n] 
+#8 3.466 :: Retrieving packages...
+#8 18.74  devkitarm-gcc-16.1.0-1-x86_64 downloading...
+#8 18.74  devkitarm-binutils-2.46.0-1-x86_64 downloading...
+#8 18.74  tex3ds-2.3.0-4-x86_64 downloading...
+#8 18.74  devkitARM-gdb-14.1-2-x86_64 downloading...
+#8 18.74  3ds-examples-20240917-1-any downloading...
+#8 18.74  libctru-2.7.1-1-any downloading...
+#8 18.74  devkitarm-newlib-4.6.0.20260123-5-any downloading...
+#8 18.74  citro3d-1.7.1-2-any downloading...
+#8 18.74  3ds-sdl-1.2.15-19-any downloading...
+#8 18.74  3ds-libpng-1.6.53-1-any downloading...
+#8 18.74  3ds-mikmod-3.3.13-1-any downloading...
+#8 18.74  citro2d-1.7.0-1-any downloading...
+#8 18.74  3ds-zlib-1.3.1-1-any downloading...
+#8 18.74  3dstools-1.3.1-3-x86_64 downloading...
+#8 18.74  3ds-sdl_mixer-1.2.12-9-any downloading...
+#8 18.74  3ds-libvorbisidec-1.2.1-3-any downloading...
+#8 18.74  3dslink-0.6.3-1-x86_64 downloading...
+#8 18.74  picasso-2.7.2-3-x86_64 downloading...
+#8 18.74  general-tools-1.4.4-1-x86_64 downloading...
+#8 18.74  3ds-libogg-1.3.6-1-any downloading...
+#8 18.74  3ds-sdl_image-1.2.12-3-any downloading...
+#8 18.74  devkitarm-crtls-1.2.6-1-any downloading...
+#8 18.74  catnip-0.2.0-1-any downloading...
+#8 18.74  3ds-cmake-1.5.2-1-any downloading...
+#8 18.74  devkitarm-cmake-1.2.4-1-any downloading...
+#8 18.74  dkp-toolchain-vars-1.0.5-1-any downloading...
+#8 18.74  devkitARM-r68-1-any downloading...
+#8 18.74  3ds-pkg-config-0.28-5-any downloading...
+#8 18.74  devkit-env-1.0.1-2-any downloading...
+#8 18.74 checking keyring...
+#8 18.76 checking package integrity...
+#8 19.71 loading package files...
+#8 19.74 checking for file conflicts...
+#8 19.74 checking available disk space...
+#8 19.77 :: Processing package changes...
+#8 19.77 reinstalling devkitarm-cmake...
+#8 19.77 reinstalling 3dstools...
+#8 19.77 reinstalling picasso...
+#8 19.77 reinstalling tex3ds...
+#8 19.80 reinstalling 3ds-pkg-config...
+#8 19.80 reinstalling 3ds-cmake...
+#8 19.80 reinstalling 3ds-examples...
+#8 19.86 reinstalling catnip...
+#8 19.86 reinstalling devkitarm-binutils...
+#8 19.91 reinstalling devkitarm-newlib...
+#8 19.98 reinstalling devkitarm-crtls...
+#8 19.99 reinstalling general-tools...
+#8 19.99 reinstalling devkitarm-gcc...
+#8 20.81 reinstalling devkitARM...
+#8 20.81 upgrading libctru...
+#8 20.84 reinstalling citro3d...
+#8 20.85 reinstalling citro2d...
+#8 20.85 reinstalling 3dslink...
+#8 20.85 reinstalling devkit-env...
+#8 20.86 reinstalling devkitARM-gdb...
+#8 20.88 reinstalling dkp-toolchain-vars...
+#8 20.88 reinstalling 3ds-sdl...
+#8 20.89 reinstalling 3ds-libogg...
+#8 20.89 reinstalling 3ds-libvorbisidec...
+#8 20.90 reinstalling 3ds-mikmod...
+#8 20.90 reinstalling 3ds-sdl_mixer...
+#8 20.91 reinstalling 3ds-zlib...
+#8 20.91 reinstalling 3ds-libpng...
+#8 20.92 reinstalling 3ds-sdl_image...
+#8 20.96 
+#8 20.96 Cache directory: /opt/devkitpro/pacman/var/cache/pacman/pkg/
+#8 20.96 :: Do you want to remove ALL files from cache? [y/N] 
+#8 20.96 
+#8 20.96 Database directory: /opt/devkitpro/pacman/var/lib/pacman/
+#8 20.96 :: Do you want to remove unused repositories? [Y/n] 
+#8 20.96 removing unused sync repositories...
+#8 DONE 22.0s
+
+#9 [4/6] COPY tools/build-portlibs.sh /tmp/build-portlibs.sh
+#9 DONE 0.0s
+
+#10 [5/6] RUN bash /tmp/build-portlibs.sh
+#10 0.136 == trying https://www.ferzkopp.net/Software/SDL_gfx-2.0/SDL_gfx-2.0.26.tar.gz
+#10 0.143   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+#10 0.143                                  Dload  Upload   Total   Spent    Left  Speed
+#10 0.143   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0 11 1729k   11  191k    0     0   466k      0  0:00:03 --:--:--  0:00:03  465k100 1729k  100 1729k    0     0  3094k      0 --:--:-- --:--:-- --:--:-- 3094k
+#10 0.903 checking build system type... x86_64-unknown-linux-gnu
+#10 0.922 checking host system type... arm-none-eabi
+#10 0.931 checking target system type... arm-none-eabi
+#10 0.932 checking for a BSD-compatible install... /usr/bin/install -c
+#10 0.940 checking whether build environment is sane... yes
+#10 1.949 checking for arm-none-eabi-strip... arm-none-eabi-strip
+#10 1.950 checking for a thread-safe mkdir -p... /usr/bin/mkdir -p
+#10 1.952 checking for gawk... no
+#10 1.952 checking for mawk... mawk
+#10 1.953 checking whether make sets $(MAKE)... yes
+#10 1.967 checking how to print strings... printf
+#10 1.970 checking for style of include used by make... GNU
+#10 1.974 checking for arm-none-eabi-gcc... arm-none-eabi-gcc
+#10 1.995 checking whether the C compiler works... yes
+#10 2.021 checking for C compiler default output file name... a.out
+#10 2.023 checking for suffix of executables... 
+#10 2.047 checking whether we are cross compiling... yes
+#10 2.084 checking for suffix of object files... o
+#10 2.105 checking whether we are using the GNU C compiler... yes
+#10 2.125 checking whether arm-none-eabi-gcc accepts -g... yes
+#10 2.141 checking for arm-none-eabi-gcc option to accept ISO C89... none needed
+#10 2.177 checking dependency style of arm-none-eabi-gcc... gcc3
+#10 2.211 checking for a sed that does not truncate output... /usr/bin/sed
+#10 2.216 checking for grep that handles long lines and -e... /usr/bin/grep
+#10 2.218 checking for egrep... /usr/bin/grep -E
+#10 2.220 checking for fgrep... /usr/bin/grep -F
+#10 2.222 checking for ld used by arm-none-eabi-gcc... /opt/devkitpro/devkitARM/arm-none-eabi/bin/ld
+#10 2.239 checking if the linker (/opt/devkitpro/devkitARM/arm-none-eabi/bin/ld) is GNU ld... yes
+#10 2.241 checking for BSD- or MS-compatible name lister (nm)... /opt/devkitpro/devkitARM/bin/arm-none-eabi-nm -B
+#10 2.244 checking the name lister (/opt/devkitpro/devkitARM/bin/arm-none-eabi-nm -B) interface... BSD nm
+#10 2.267 checking whether ln -s works... yes
+#10 2.267 checking the maximum length of command line arguments... 3145728
+#10 2.271 checking whether the shell understands some XSI constructs... yes
+#10 2.272 checking whether the shell understands "+="... yes
+#10 2.275 checking how to convert x86_64-unknown-linux-gnu file names to arm-none-eabi format... func_convert_file_noop
+#10 2.276 checking how to convert x86_64-unknown-linux-gnu file names to toolchain format... func_convert_file_noop
+#10 2.276 checking for /opt/devkitpro/devkitARM/arm-none-eabi/bin/ld option to reload object files... -r
+#10 2.276 checking for arm-none-eabi-objdump... objdump
+#10 2.276 checking how to recognize dependent libraries... unknown
+#10 2.276 checking for arm-none-eabi-dlltool... dlltool
+#10 2.276 checking how to associate runtime and link libraries... printf %s\n
+#10 2.277 checking for arm-none-eabi-ar... arm-none-eabi-gcc-ar
+#10 2.277 checking for archiver @FILE support... @
+#10 2.305 checking for arm-none-eabi-strip... (cached) arm-none-eabi-strip
+#10 2.306 checking for arm-none-eabi-ranlib... arm-none-eabi-gcc-ranlib
+#10 2.306 checking command to parse /opt/devkitpro/devkitARM/bin/arm-none-eabi-nm -B output from arm-none-eabi-gcc object... ok
+#10 2.363 checking for sysroot... no
+#10 2.364 checking for arm-none-eabi-mt... no
+#10 2.364 checking for mt... no
+#10 2.365 checking if : is a manifest tool... no
+#10 2.369 checking how to run the C preprocessor... arm-none-eabi-gcc -E
+#10 2.414 checking for ANSI C header files... yes
+#10 2.469 checking for sys/types.h... yes
+#10 2.502 checking for sys/stat.h... yes
+#10 2.535 checking for stdlib.h... yes
+#10 2.569 checking for string.h... yes
+#10 2.603 checking for memory.h... yes
+#10 2.637 checking for strings.h... yes
+#10 2.672 checking for inttypes.h... yes
+#10 2.707 checking for stdint.h... yes
+#10 2.743 checking for unistd.h... yes
+#10 2.777 checking for dlfcn.h... no
+#10 2.810 checking for objdir... .libs
+#10 2.861 checking if arm-none-eabi-gcc supports -fno-rtti -fno-exceptions... no
+#10 2.885 checking for arm-none-eabi-gcc option to produce PIC... -fPIC -DPIC
+#10 2.885 checking if arm-none-eabi-gcc PIC flag -fPIC -DPIC works... yes
+#10 2.907 checking if arm-none-eabi-gcc static flag -static works... yes
+#10 2.936 checking if arm-none-eabi-gcc supports -c -o file.o... yes
+#10 2.968 checking if arm-none-eabi-gcc supports -c -o file.o... (cached) yes
+#10 2.968 checking whether the arm-none-eabi-gcc linker (/opt/devkitpro/devkitARM/arm-none-eabi/bin/ld) supports shared libraries... yes
+#10 2.973 checking dynamic linker characteristics... no
+#10 2.982 checking how to hardcode library paths into programs... immediate
+#10 2.982 checking whether stripping libraries is possible... yes
+#10 2.984 checking if libtool supports shared libraries... no
+#10 2.984 checking whether to build shared libraries... no
+#10 2.984 checking whether to build static libraries... yes
+#10 2.985 checking whether make sets $(MAKE)... (cached) yes
+#10 2.987 checking for arm-none-eabi-gcc... (cached) arm-none-eabi-gcc
+#10 3.009 checking whether we are using the GNU C compiler... (cached) yes
+#10 3.009 checking whether arm-none-eabi-gcc accepts -g... (cached) yes
+#10 3.009 checking for arm-none-eabi-gcc option to accept ISO C89... (cached) none needed
+#10 3.009 checking dependency style of arm-none-eabi-gcc... (cached) gcc3
+#10 3.030 checking whether we are using the GNU C++ compiler... yes
+#10 3.053 checking whether arm-none-eabi-g++ accepts -g... yes
+#10 3.071 checking dependency style of arm-none-eabi-g++... gcc3
+#10 3.110 checking how to run the C++ preprocessor... arm-none-eabi-g++ -E
+#10 3.212 checking for ld used by arm-none-eabi-g++... /opt/devkitpro/devkitARM/arm-none-eabi/bin/ld
+#10 3.230 checking if the linker (/opt/devkitpro/devkitARM/arm-none-eabi/bin/ld) is GNU ld... yes
+#10 3.235 checking whether the arm-none-eabi-g++ linker (/opt/devkitpro/devkitARM/arm-none-eabi/bin/ld) supports shared libraries... no
+#10 3.283 checking for arm-none-eabi-g++ option to produce PIC... -fPIC -DPIC
+#10 3.283 checking if arm-none-eabi-g++ PIC flag -fPIC -DPIC works... yes
+#10 3.307 checking if arm-none-eabi-g++ static flag -static works... yes
+#10 3.339 checking if arm-none-eabi-g++ supports -c -o file.o... yes
+#10 3.370 checking if arm-none-eabi-g++ supports -c -o file.o... (cached) yes
+#10 3.370 checking whether the arm-none-eabi-g++ linker (/opt/devkitpro/devkitARM/arm-none-eabi/bin/ld) supports shared libraries... no
+#10 3.371 checking dynamic linker characteristics... no
+#10 3.371 checking how to hardcode library paths into programs... immediate
+#10 3.371 checking for an ANSI C-conforming const... yes
+#10 3.394 checking for X... no
+#10 3.438 checking for sdl-config... /opt/devkitpro/portlibs/3ds/bin/sdl-config
+#10 3.438 checking for SDL - version >= 1.2.0... cross compiling; assumed OK... 
+#10 3.454 yes
+#10 3.479 configure: creating ./config.status
+#10 3.988 config.status: creating Makefile
+#10 3.999 config.status: creating SDL_gfx.pc
+#10 4.010 config.status: executing depfiles commands
+#10 4.034 config.status: executing libtool commands
+#10 4.105 
+#10 4.105 Options summary:
+#10 4.105 * --enable-mmx: no
+#10 4.129 CDPATH="${ZSH_VERSION+.}:" && cd . && /bin/bash /tmp/tmp.MJTFTk6m4z/sdlgfx-src/missing --run aclocal-1.11 -I m4
+#10 4.132 /tmp/tmp.MJTFTk6m4z/sdlgfx-src/missing: line 52: aclocal-1.11: command not found
+#10 4.134 WARNING: `aclocal-1.11' is missing on your system.  You should only need it if
+#10 4.134          you modified `acinclude.m4' or `configure.in'.  You might want
+#10 4.134          to install the `Automake' and `Perl' packages.  Grab them from
+#10 4.134          any GNU archive site.
+#10 4.136 CDPATH="${ZSH_VERSION+.}:" && cd . && /bin/bash /tmp/tmp.MJTFTk6m4z/sdlgfx-src/missing --run autoconf
+#10 4.137  cd . && /bin/bash /tmp/tmp.MJTFTk6m4z/sdlgfx-src/missing --run automake-1.11 --foreign
+#10 4.139 /tmp/tmp.MJTFTk6m4z/sdlgfx-src/missing: line 52: automake-1.11: command not found
+#10 4.139 /tmp/tmp.MJTFTk6m4z/sdlgfx-src/missing: line 52: autoconf: command not found
+#10 4.141 WARNING: `automake-1.11' is missing on your system.  You should only need it if
+#10 4.141          you modified `Makefile.am', `acinclude.m4' or `configure.in'.
+#10 4.141          You might want to install the `Automake' and `Perl' packages.
+#10 4.141          Grab them from any GNU archive site.
+#10 4.142 WARNING: `autoconf' is missing on your system.  You should only need it if
+#10 4.142          you modified `configure.in'.  You might want to install the
+#10 4.142          `Autoconf' and `GNU m4' packages.  Grab them from any GNU
+#10 4.142          archive site.
+#10 4.143 /bin/bash ./config.status --recheck
+#10 4.165 running CONFIG_SHELL=/bin/bash /bin/bash ./configure --prefix=/opt/devkitpro/portlibs/3ds --host=arm-none-eabi --disable-shared --enable-static --disable-mmx --with-sdl-prefix=/opt/devkitpro/portlibs/3ds host_alias=arm-none-eabi CC=arm-none-eabi-gcc CFLAGS=-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft -O2 -mword-relocations -ffunction-sections -fdata-sections LDFLAGS=-L/opt/devkitpro/portlibs/3ds/lib -L/opt/devkitpro/libctru/lib LIBS=-lctru CPPFLAGS=-D_3DS -D__3DS__ -I/opt/devkitpro/portlibs/3ds/include -I/opt/devkitpro/libctru/include CXX=arm-none-eabi-g++ CXXFLAGS=-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft -O2 -mword-relocations -ffunction-sections -fdata-sections --no-create --no-recursion
+#10 4.271 checking build system type... x86_64-unknown-linux-gnu
+#10 4.291 checking host system type... arm-none-eabi
+#10 4.300 checking target system type... arm-none-eabi
+#10 4.301 checking for a BSD-compatible install... /usr/bin/install -c
+#10 4.309 checking whether build environment is sane... yes
+#10 5.319 checking for arm-none-eabi-strip... arm-none-eabi-strip
+#10 5.319 checking for a thread-safe mkdir -p... /usr/bin/mkdir -p
+#10 5.321 checking for gawk... no
+#10 5.322 checking for mawk... mawk
+#10 5.322 checking whether make sets $(MAKE)... yes
+#10 5.336 checking how to print strings... printf
+#10 5.339 checking for style of include used by make... GNU
+#10 5.343 checking for arm-none-eabi-gcc... arm-none-eabi-gcc
+#10 5.364 checking whether the C compiler works... yes
+#10 5.390 checking for C compiler default output file name... a.out
+#10 5.391 checking for suffix of executables... 
+#10 5.417 checking whether we are cross compiling... yes
+#10 5.454 checking for suffix of object files... o
+#10 5.476 checking whether we are using the GNU C compiler... yes
+#10 5.496 checking whether arm-none-eabi-gcc accepts -g... yes
+#10 5.512 checking for arm-none-eabi-gcc option to accept ISO C89... none needed
+#10 5.548 checking dependency style of arm-none-eabi-gcc... gcc3
+#10 5.583 checking for a sed that does not truncate output... /usr/bin/sed
+#10 5.588 checking for grep that handles long lines and -e... /usr/bin/grep
+#10 5.590 checking for egrep... /usr/bin/grep -E
+#10 5.591 checking for fgrep... /usr/bin/grep -F
+#10 5.593 checking for ld used by arm-none-eabi-gcc... /opt/devkitpro/devkitARM/arm-none-eabi/bin/ld
+#10 5.610 checking if the linker (/opt/devkitpro/devkitARM/arm-none-eabi/bin/ld) is GNU ld... yes
+#10 5.612 checking for BSD- or MS-compatible name lister (nm)... /opt/devkitpro/devkitARM/bin/arm-none-eabi-nm -B
+#10 5.615 checking the name lister (/opt/devkitpro/devkitARM/bin/arm-none-eabi-nm -B) interface... BSD nm
+#10 5.637 checking whether ln -s works... yes
+#10 5.637 checking the maximum length of command line arguments... 3145728
+#10 5.641 checking whether the shell understands some XSI constructs... yes
+#10 5.642 checking whether the shell understands "+="... yes
+#10 5.646 checking how to convert x86_64-unknown-linux-gnu file names to arm-none-eabi format... func_convert_file_noop
+#10 5.646 checking how to convert x86_64-unknown-linux-gnu file names to toolchain format... func_convert_file_noop
+#10 5.646 checking for /opt/devkitpro/devkitARM/arm-none-eabi/bin/ld option to reload object files... -r
+#10 5.646 checking for arm-none-eabi-objdump... objdump
+#10 5.647 checking how to recognize dependent libraries... unknown
+#10 5.647 checking for arm-none-eabi-dlltool... dlltool
+#10 5.647 checking how to associate runtime and link libraries... printf %s\n
+#10 5.648 checking for arm-none-eabi-ar... arm-none-eabi-gcc-ar
+#10 5.648 checking for archiver @FILE support... @
+#10 5.676 checking for arm-none-eabi-strip... (cached) arm-none-eabi-strip
+#10 5.676 checking for arm-none-eabi-ranlib... arm-none-eabi-gcc-ranlib
+#10 5.677 checking command to parse /opt/devkitpro/devkitARM/bin/arm-none-eabi-nm -B output from arm-none-eabi-gcc object... ok
+#10 5.734 checking for sysroot... no
+#10 5.735 checking for arm-none-eabi-mt... no
+#10 5.735 checking for mt... no
+#10 5.736 checking if : is a manifest tool... no
+#10 5.740 checking how to run the C preprocessor... arm-none-eabi-gcc -E
+#10 5.785 checking for ANSI C header files... yes
+#10 5.840 checking for sys/types.h... yes
+#10 5.873 checking for sys/stat.h... yes
+#10 5.906 checking for stdlib.h... yes
+#10 5.939 checking for string.h... yes
+#10 5.973 checking for memory.h... yes
+#10 6.008 checking for strings.h... yes
+#10 6.043 checking for inttypes.h... yes
+#10 6.078 checking for stdint.h... yes
+#10 6.112 checking for unistd.h... yes
+#10 6.146 checking for dlfcn.h... no
+#10 6.178 checking for objdir... .libs
+#10 6.229 checking if arm-none-eabi-gcc supports -fno-rtti -fno-exceptions... no
+#10 6.252 checking for arm-none-eabi-gcc option to produce PIC... -fPIC -DPIC
+#10 6.252 checking if arm-none-eabi-gcc PIC flag -fPIC -DPIC works... yes
+#10 6.274 checking if arm-none-eabi-gcc static flag -static works... yes
+#10 6.302 checking if arm-none-eabi-gcc supports -c -o file.o... yes
+#10 6.331 checking if arm-none-eabi-gcc supports -c -o file.o... (cached) yes
+#10 6.331 checking whether the arm-none-eabi-gcc linker (/opt/devkitpro/devkitARM/arm-none-eabi/bin/ld) supports shared libraries... yes
+#10 6.336 checking dynamic linker characteristics... no
+#10 6.345 checking how to hardcode library paths into programs... immediate
+#10 6.346 checking whether stripping libraries is possible... yes
+#10 6.347 checking if libtool supports shared libraries... no
+#10 6.347 checking whether to build shared libraries... no
+#10 6.347 checking whether to build static libraries... yes
+#10 6.348 checking whether make sets $(MAKE)... (cached) yes
+#10 6.351 checking for arm-none-eabi-gcc... (cached) arm-none-eabi-gcc
+#10 6.371 checking whether we are using the GNU C compiler... (cached) yes
+#10 6.372 checking whether arm-none-eabi-gcc accepts -g... (cached) yes
+#10 6.372 checking for arm-none-eabi-gcc option to accept ISO C89... (cached) none needed
+#10 6.372 checking dependency style of arm-none-eabi-gcc... (cached) gcc3
+#10 6.392 checking whether we are using the GNU C++ compiler... yes
+#10 6.414 checking whether arm-none-eabi-g++ accepts -g... yes
+#10 6.433 checking dependency style of arm-none-eabi-g++... gcc3
+#10 6.473 checking how to run the C++ preprocessor... arm-none-eabi-g++ -E
+#10 6.574 checking for ld used by arm-none-eabi-g++... /opt/devkitpro/devkitARM/arm-none-eabi/bin/ld
+#10 6.591 checking if the linker (/opt/devkitpro/devkitARM/arm-none-eabi/bin/ld) is GNU ld... yes
+#10 6.596 checking whether the arm-none-eabi-g++ linker (/opt/devkitpro/devkitARM/arm-none-eabi/bin/ld) supports shared libraries... no
+#10 6.644 checking for arm-none-eabi-g++ option to produce PIC... -fPIC -DPIC
+#10 6.644 checking if arm-none-eabi-g++ PIC flag -fPIC -DPIC works... yes
+#10 6.668 checking if arm-none-eabi-g++ static flag -static works... yes
+#10 6.699 checking if arm-none-eabi-g++ supports -c -o file.o... yes
+#10 6.731 checking if arm-none-eabi-g++ supports -c -o file.o... (cached) yes
+#10 6.731 checking whether the arm-none-eabi-g++ linker (/opt/devkitpro/devkitARM/arm-none-eabi/bin/ld) supports shared libraries... no
+#10 6.731 checking dynamic linker characteristics... no
+#10 6.731 checking how to hardcode library paths into programs... immediate
+#10 6.732 checking for an ANSI C-conforming const... yes
+#10 6.755 checking for X... no
+#10 6.797 checking for sdl-config... /opt/devkitpro/portlibs/3ds/bin/sdl-config
+#10 6.797 checking for SDL - version >= 1.2.0... cross compiling; assumed OK... 
+#10 6.812 yes
+#10 6.836 configure: creating ./config.status
+#10 7.227 
+#10 7.227 Options summary:
+#10 7.227 * --enable-mmx: no
+#10 7.250  /bin/bash ./config.status
+#10 7.386 config.status: creating Makefile
+#10 7.397 config.status: creating SDL_gfx.pc
+#10 7.407 config.status: executing depfiles commands
+#10 7.424 config.status: executing libtool commands
+#10 7.494 /bin/bash ./libtool --tag=CC   --mode=compile arm-none-eabi-gcc -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DPACKAGE=\"SDL_gfx\" -DVERSION=\"2.0.25\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DLT_OBJDIR=\".libs/\" -DX_DISPLAY_MISSING=1 -DBUILD_DLL -I.   -D_3DS -D__3DS__ -I/opt/devkitpro/portlibs/3ds/include -I/opt/devkitpro/libctru/include  -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft -O2 -mword-relocations -ffunction-sections -fdata-sections -I/opt/devkitpro/portlibs/3ds/include/SDL -D_GNU_SOURCE=1 -ffunction-sections -fdata-sections -march=armv6k -mtune=mpcore -mfloat-abi=hard -mword-relocations -I/opt/devkitpro/libctru/include -D__3DS__ -MT SDL_gfxPrimitives.lo -MD -MP -MF .deps/SDL_gfxPrimitives.Tpo -c -o SDL_gfxPrimitives.lo SDL_gfxPrimitives.c
+#10 7.495 /bin/bash ./libtool --tag=CC   --mode=compile arm-none-eabi-gcc -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DPACKAGE=\"SDL_gfx\" -DVERSION=\"2.0.25\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DLT_OBJDIR=\".libs/\" -DX_DISPLAY_MISSING=1 -DBUILD_DLL -I.   -D_3DS -D__3DS__ -I/opt/devkitpro/portlibs/3ds/include -I/opt/devkitpro/libctru/include  -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft -O2 -mword-relocations -ffunction-sections -fdata-sections -I/opt/devkitpro/portlibs/3ds/include/SDL -D_GNU_SOURCE=1 -ffunction-sections -fdata-sections -march=armv6k -mtune=mpcore -mfloat-abi=hard -mword-relocations -I/opt/devkitpro/libctru/include -D__3DS__ -MT SDL_rotozoom.lo -MD -MP -MF .deps/SDL_rotozoom.Tpo -c -o SDL_rotozoom.lo SDL_rotozoom.c
+#10 7.495 /bin/bash ./libtool --tag=CC   --mode=compile arm-none-eabi-gcc -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DPACKAGE=\"SDL_gfx\" -DVERSION=\"2.0.25\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DLT_OBJDIR=\".libs/\" -DX_DISPLAY_MISSING=1 -DBUILD_DLL -I.   -D_3DS -D__3DS__ -I/opt/devkitpro/portlibs/3ds/include -I/opt/devkitpro/libctru/include  -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft -O2 -mword-relocations -ffunction-sections -fdata-sections -I/opt/devkitpro/portlibs/3ds/include/SDL -D_GNU_SOURCE=1 -ffunction-sections -fdata-sections -march=armv6k -mtune=mpcore -mfloat-abi=hard -mword-relocations -I/opt/devkitpro/libctru/include -D__3DS__ -MT SDL_framerate.lo -MD -MP -MF .deps/SDL_framerate.Tpo -c -o SDL_framerate.lo SDL_framerate.c
+#10 7.496 /bin/bash ./libtool --tag=CC   --mode=compile arm-none-eabi-gcc -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DPACKAGE=\"SDL_gfx\" -DVERSION=\"2.0.25\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DLT_OBJDIR=\".libs/\" -DX_DISPLAY_MISSING=1 -DBUILD_DLL -I.   -D_3DS -D__3DS__ -I/opt/devkitpro/portlibs/3ds/include -I/opt/devkitpro/libctru/include  -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft -O2 -mword-relocations -ffunction-sections -fdata-sections -I/opt/devkitpro/portlibs/3ds/include/SDL -D_GNU_SOURCE=1 -ffunction-sections -fdata-sections -march=armv6k -mtune=mpcore -mfloat-abi=hard -mword-relocations -I/opt/devkitpro/libctru/include -D__3DS__ -MT SDL_imageFilter.lo -MD -MP -MF .deps/SDL_imageFilter.Tpo -c -o SDL_imageFilter.lo SDL_imageFilter.c
+#10 7.538 libtool: compile:  arm-none-eabi-gcc -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DPACKAGE=\"SDL_gfx\" -DVERSION=\"2.0.25\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DLT_OBJDIR=\".libs/\" -DX_DISPLAY_MISSING=1 -DBUILD_DLL -I. -D_3DS -D__3DS__ -I/opt/devkitpro/portlibs/3ds/include -I/opt/devkitpro/libctru/include -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft -O2 -mword-relocations -ffunction-sections -fdata-sections -I/opt/devkitpro/portlibs/3ds/include/SDL -D_GNU_SOURCE=1 -ffunction-sections -fdata-sections -march=armv6k -mtune=mpcore -mfloat-abi=hard -mword-relocations -I/opt/devkitpro/libctru/include -D__3DS__ -MT SDL_framerate.lo -MD -MP -MF .deps/SDL_framerate.Tpo -c SDL_framerate.c -o SDL_framerate.o
+#10 7.542 libtool: compile:  arm-none-eabi-gcc -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DPACKAGE=\"SDL_gfx\" -DVERSION=\"2.0.25\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DLT_OBJDIR=\".libs/\" -DX_DISPLAY_MISSING=1 -DBUILD_DLL -I. -D_3DS -D__3DS__ -I/opt/devkitpro/portlibs/3ds/include -I/opt/devkitpro/libctru/include -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft -O2 -mword-relocations -ffunction-sections -fdata-sections -I/opt/devkitpro/portlibs/3ds/include/SDL -D_GNU_SOURCE=1 -ffunction-sections -fdata-sections -march=armv6k -mtune=mpcore -mfloat-abi=hard -mword-relocations -I/opt/devkitpro/libctru/include -D__3DS__ -MT SDL_gfxPrimitives.lo -MD -MP -MF .deps/SDL_gfxPrimitives.Tpo -c SDL_gfxPrimitives.c -o SDL_gfxPrimitives.o
+#10 7.545 libtool: compile:  arm-none-eabi-gcc -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DPACKAGE=\"SDL_gfx\" -DVERSION=\"2.0.25\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DLT_OBJDIR=\".libs/\" -DX_DISPLAY_MISSING=1 -DBUILD_DLL -I. -D_3DS -D__3DS__ -I/opt/devkitpro/portlibs/3ds/include -I/opt/devkitpro/libctru/include -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft -O2 -mword-relocations -ffunction-sections -fdata-sections -I/opt/devkitpro/portlibs/3ds/include/SDL -D_GNU_SOURCE=1 -ffunction-sections -fdata-sections -march=armv6k -mtune=mpcore -mfloat-abi=hard -mword-relocations -I/opt/devkitpro/libctru/include -D__3DS__ -MT SDL_rotozoom.lo -MD -MP -MF .deps/SDL_rotozoom.Tpo -c SDL_rotozoom.c -o SDL_rotozoom.o
+#10 7.548 libtool: compile:  arm-none-eabi-gcc -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DPACKAGE=\"SDL_gfx\" -DVERSION=\"2.0.25\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DLT_OBJDIR=\".libs/\" -DX_DISPLAY_MISSING=1 -DBUILD_DLL -I. -D_3DS -D__3DS__ -I/opt/devkitpro/portlibs/3ds/include -I/opt/devkitpro/libctru/include -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft -O2 -mword-relocations -ffunction-sections -fdata-sections -I/opt/devkitpro/portlibs/3ds/include/SDL -D_GNU_SOURCE=1 -ffunction-sections -fdata-sections -march=armv6k -mtune=mpcore -mfloat-abi=hard -mword-relocations -I/opt/devkitpro/libctru/include -D__3DS__ -MT SDL_imageFilter.lo -MD -MP -MF .deps/SDL_imageFilter.Tpo -c SDL_imageFilter.c -o SDL_imageFilter.o
+#10 7.623 mv -f .deps/SDL_framerate.Tpo .deps/SDL_framerate.Plo
+#10 7.626 /bin/bash ./libtool --tag=CC   --mode=compile arm-none-eabi-gcc -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DPACKAGE=\"SDL_gfx\" -DVERSION=\"2.0.25\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DLT_OBJDIR=\".libs/\" -DX_DISPLAY_MISSING=1 -DBUILD_DLL -I.   -D_3DS -D__3DS__ -I/opt/devkitpro/portlibs/3ds/include -I/opt/devkitpro/libctru/include  -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft -O2 -mword-relocations -ffunction-sections -fdata-sections -I/opt/devkitpro/portlibs/3ds/include/SDL -D_GNU_SOURCE=1 -ffunction-sections -fdata-sections -march=armv6k -mtune=mpcore -mfloat-abi=hard -mword-relocations -I/opt/devkitpro/libctru/include -D__3DS__ -MT SDL_gfxBlitFunc.lo -MD -MP -MF .deps/SDL_gfxBlitFunc.Tpo -c -o SDL_gfxBlitFunc.lo SDL_gfxBlitFunc.c
+#10 7.676 libtool: compile:  arm-none-eabi-gcc -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DPACKAGE=\"SDL_gfx\" -DVERSION=\"2.0.25\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DLT_OBJDIR=\".libs/\" -DX_DISPLAY_MISSING=1 -DBUILD_DLL -I. -D_3DS -D__3DS__ -I/opt/devkitpro/portlibs/3ds/include -I/opt/devkitpro/libctru/include -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft -O2 -mword-relocations -ffunction-sections -fdata-sections -I/opt/devkitpro/portlibs/3ds/include/SDL -D_GNU_SOURCE=1 -ffunction-sections -fdata-sections -march=armv6k -mtune=mpcore -mfloat-abi=hard -mword-relocations -I/opt/devkitpro/libctru/include -D__3DS__ -MT SDL_gfxBlitFunc.lo -MD -MP -MF .deps/SDL_gfxBlitFunc.Tpo -c SDL_gfxBlitFunc.c -o SDL_gfxBlitFunc.o
+#10 7.926 mv -f .deps/SDL_gfxBlitFunc.Tpo .deps/SDL_gfxBlitFunc.Plo
+#10 8.066 mv -f .deps/SDL_rotozoom.Tpo .deps/SDL_rotozoom.Plo
+#10 8.158 mv -f .deps/SDL_imageFilter.Tpo .deps/SDL_imageFilter.Plo
+#10 9.159 mv -f .deps/SDL_gfxPrimitives.Tpo .deps/SDL_gfxPrimitives.Plo
+#10 9.161 /bin/bash ./libtool --tag=CC   --mode=link arm-none-eabi-gcc  -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft -O2 -mword-relocations -ffunction-sections -fdata-sections -I/opt/devkitpro/portlibs/3ds/include/SDL -D_GNU_SOURCE=1 -ffunction-sections -fdata-sections -march=armv6k -mtune=mpcore -mfloat-abi=hard -mword-relocations -I/opt/devkitpro/libctru/include -D__3DS__ -no-undefined -version-info 24:1:9 -L/opt/devkitpro/portlibs/3ds/lib -L/opt/devkitpro/libctru/lib -o libSDL_gfx.la -rpath /opt/devkitpro/portlibs/3ds/lib SDL_gfxPrimitives.lo SDL_rotozoom.lo SDL_framerate.lo SDL_imageFilter.lo SDL_gfxBlitFunc.lo  -lctru -lm -L/opt/devkitpro/portlibs/3ds/lib -march=armv6k -mfloat-abi=hard -L/opt/devkitpro/portlibs/3ds -lSDL -L/opt/devkitpro/libctru/lib -lcitro3d -lctru -lm
+#10 9.206 libtool: link: arm-none-eabi-gcc-ar cru .libs/libSDL_gfx.a  SDL_gfxPrimitives.o SDL_rotozoom.o SDL_framerate.o SDL_imageFilter.o SDL_gfxBlitFunc.o
+#10 9.210 libtool: link: arm-none-eabi-gcc-ranlib .libs/libSDL_gfx.a
+#10 9.222 libtool: link: ( cd ".libs" && rm -f "libSDL_gfx.la" && ln -s "../libSDL_gfx.la" "libSDL_gfx.la" )
+#10 9.236 make[1]: Entering directory '/tmp/tmp.MJTFTk6m4z/sdlgfx-src'
+#10 9.237  /usr/bin/mkdir -p '/opt/devkitpro/portlibs/3ds/lib'
+#10 9.238  /bin/bash ./libtool   --mode=install /usr/bin/install -c   libSDL_gfx.la '/opt/devkitpro/portlibs/3ds/lib'
+#10 9.246 libtool: install: /usr/bin/install -c .libs/libSDL_gfx.lai /opt/devkitpro/portlibs/3ds/lib/libSDL_gfx.la
+#10 9.248 libtool: install: /usr/bin/install -c .libs/libSDL_gfx.a /opt/devkitpro/portlibs/3ds/lib/libSDL_gfx.a
+#10 9.249 libtool: install: chmod 644 /opt/devkitpro/portlibs/3ds/lib/libSDL_gfx.a
+#10 9.250 libtool: install: arm-none-eabi-gcc-ranlib /opt/devkitpro/portlibs/3ds/lib/libSDL_gfx.a
+#10 9.269  /usr/bin/mkdir -p '/opt/devkitpro/portlibs/3ds/include/SDL'
+#10 9.272  /usr/bin/install -c -m 644 SDL_gfxPrimitives.h SDL_gfxPrimitives_font.h SDL_rotozoom.h SDL_framerate.h SDL_imageFilter.h SDL_gfxBlitFunc.h '/opt/devkitpro/portlibs/3ds/include/SDL'
+#10 9.276  /usr/bin/mkdir -p '/opt/devkitpro/portlibs/3ds/lib/pkgconfig'
+#10 9.279  /usr/bin/install -c -m 644 SDL_gfx.pc '/opt/devkitpro/portlibs/3ds/lib/pkgconfig'
+#10 9.280 make[1]: Leaving directory '/tmp/tmp.MJTFTk6m4z/sdlgfx-src'
+#10 9.282 Cloning into 'yaml-cpp'...
+#10 9.898 Note: switching to '0579ae3d976091d7d664aa9d2527e0d0cff25763'.
+#10 9.898 
+#10 9.898 You are in 'detached HEAD' state. You can look around, make experimental
+#10 9.898 changes and commit them, and you can discard any commits you make in this
+#10 9.898 state without impacting any branches by switching back to a branch.
+#10 9.898 
+#10 9.898 If you want to create a new branch to retain commits you create, you may
+#10 9.898 do so (now or later) by using -c with the switch command. Example:
+#10 9.898 
+#10 9.898   git switch -c <new-branch-name>
+#10 9.898 
+#10 9.898 Or undo this operation with:
+#10 9.898 
+#10 9.898   git switch -
+#10 9.898 
+#10 9.898 Turn off this advice by setting config variable advice.detachedHead to false
+#10 9.898 
+#10 9.950 CMake Deprecation Warning at CMakeLists.txt:2 (cmake_minimum_required):
+#10 9.950   Compatibility with CMake < 3.10 will be removed from a future version of
+#10 9.950   CMake.
+#10 9.950 
+#10 9.950   Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+#10 9.950   to tell CMake that the project requires at least <min> but has been updated
+#10 9.950   to work with policies introduced by <max> or earlier.
+#10 9.950 
+#10 9.950 
+#10 9.994 -- The CXX compiler identification is GNU 16.1.0
+#10 10.00 -- Detecting CXX compiler ABI info
+#10 10.09 -- Detecting CXX compiler ABI info - done
+#10 10.10 -- Check for working CXX compiler: /opt/devkitpro/devkitARM/bin/arm-none-eabi-g++ - skipped
+#10 10.10 -- Detecting CXX compile features
+#10 10.10 -- Detecting CXX compile features - done
+#10 10.10 -- Configuring done (0.2s)
+#10 10.13 CMake Warning:
+#10 10.13   Manually-specified variables were not used by the project:
+#10 10.13 
+#10 10.13     CMAKE_C_COMPILER
+#10 10.13     CMAKE_C_FLAGS
+#10 10.13 
+#10 10.13 
+#10 10.13 -- Generating done (0.0s)
+#10 10.13 -- Build files have been written to: /tmp/tmp.MJTFTk6m4z/yaml-build
+#10 10.19 [  3%] Building CXX object CMakeFiles/yaml-cpp.dir/src/binary.cpp.obj
+#10 10.19 [  6%] Building CXX object CMakeFiles/yaml-cpp.dir/src/convert.cpp.obj
+#10 10.19 [ 10%] Building CXX object CMakeFiles/yaml-cpp.dir/src/depthguard.cpp.obj
+#10 10.19 [ 13%] Building CXX object CMakeFiles/yaml-cpp.dir/src/directives.cpp.obj
+#10 10.59 [ 16%] Building CXX object CMakeFiles/yaml-cpp.dir/src/emit.cpp.obj
+#10 10.62 [ 20%] Building CXX object CMakeFiles/yaml-cpp.dir/src/emitfromevents.cpp.obj
+#10 10.73 [ 23%] Building CXX object CMakeFiles/yaml-cpp.dir/src/emitter.cpp.obj
+#10 11.42 [ 26%] Building CXX object CMakeFiles/yaml-cpp.dir/src/emitterstate.cpp.obj
+#10 11.43 [ 30%] Building CXX object CMakeFiles/yaml-cpp.dir/src/emitterutils.cpp.obj
+#10 11.59 [ 33%] Building CXX object CMakeFiles/yaml-cpp.dir/src/exceptions.cpp.obj
+#10 12.15 [ 36%] Building CXX object CMakeFiles/yaml-cpp.dir/src/exp.cpp.obj
+#10 12.17 [ 40%] Building CXX object CMakeFiles/yaml-cpp.dir/src/memory.cpp.obj
+#10 12.76 [ 43%] Building CXX object CMakeFiles/yaml-cpp.dir/src/node.cpp.obj
+#10 13.14 [ 46%] Building CXX object CMakeFiles/yaml-cpp.dir/src/node_data.cpp.obj
+#10 13.18 [ 50%] Building CXX object CMakeFiles/yaml-cpp.dir/src/nodebuilder.cpp.obj
+#10 13.32 [ 53%] Building CXX object CMakeFiles/yaml-cpp.dir/src/nodeevents.cpp.obj
+#10 14.50 [ 56%] Building CXX object CMakeFiles/yaml-cpp.dir/src/null.cpp.obj
+#10 14.58 [ 60%] Building CXX object CMakeFiles/yaml-cpp.dir/src/ostream_wrapper.cpp.obj
+#10 14.59 [ 63%] Building CXX object CMakeFiles/yaml-cpp.dir/src/parse.cpp.obj
+#10 14.66 [ 66%] Building CXX object CMakeFiles/yaml-cpp.dir/src/parser.cpp.obj
+#10 14.76 [ 70%] Building CXX object CMakeFiles/yaml-cpp.dir/src/regex_yaml.cpp.obj
+#10 15.20 [ 73%] Building CXX object CMakeFiles/yaml-cpp.dir/src/scanner.cpp.obj
+#10 15.63 [ 76%] Building CXX object CMakeFiles/yaml-cpp.dir/src/scanscalar.cpp.obj
+#10 15.85 [ 80%] Building CXX object CMakeFiles/yaml-cpp.dir/src/scantag.cpp.obj
+#10 15.95 [ 83%] Building CXX object CMakeFiles/yaml-cpp.dir/src/scantoken.cpp.obj
+#10 17.21 [ 86%] Building CXX object CMakeFiles/yaml-cpp.dir/src/simplekey.cpp.obj
+#10 17.33 [ 90%] Building CXX object CMakeFiles/yaml-cpp.dir/src/singledocparser.cpp.obj
+#10 18.41 [ 93%] Building CXX object CMakeFiles/yaml-cpp.dir/src/stream.cpp.obj
+#10 18.46 [ 96%] Building CXX object CMakeFiles/yaml-cpp.dir/src/tag.cpp.obj
+#10 19.56 [100%] Linking CXX static library libyaml-cpp.a
+#10 19.61 [100%] Built target yaml-cpp
+#10 19.70 [100%] Built target yaml-cpp
+#10 19.72 Install the project...
+#10 19.73 -- Install configuration: ""
+#10 19.73 -- Installing: /opt/devkitpro/portlibs/3ds/lib/libyaml-cpp.a
+#10 19.73 -- Up-to-date: /opt/devkitpro/portlibs/3ds/include
+#10 19.73 -- Up-to-date: /opt/devkitpro/portlibs/3ds/include/yaml-cpp
+#10 19.73 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/null.h
+#10 19.73 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/noexcept.h
+#10 19.73 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/mark.h
+#10 19.73 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/dll.h
+#10 19.73 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/binary.h
+#10 19.73 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/stlemitter.h
+#10 19.73 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/ostream_wrapper.h
+#10 19.73 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/parser.h
+#10 19.73 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/emitterstyle.h
+#10 19.73 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/emittermanip.h
+#10 19.73 -- Up-to-date: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node
+#10 19.73 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node/ptr.h
+#10 19.73 -- Up-to-date: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node/detail
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node/detail/iterator_fwd.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node/detail/impl.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node/detail/memory.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node/detail/iterator.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node/detail/node_ref.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node/detail/node.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node/detail/node_iterator.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node/detail/node_data.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node/convert.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node/impl.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node/iterator.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node/node.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node/emit.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node/parse.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/node/type.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/eventhandler.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/depthguard.h
+#10 19.74 -- Up-to-date: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/contrib
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/contrib/graphbuilder.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/contrib/anchordict.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/emitterdef.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/emitfromevents.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/emitter.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/traits.h
+#10 19.74 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/exceptions.h
+#10 19.75 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/anchor.h
+#10 19.75 -- Installing: /opt/devkitpro/portlibs/3ds/include/yaml-cpp/yaml.h
+#10 19.75 -- Installing: /opt/devkitpro/portlibs/3ds/share/cmake/yaml-cpp/yaml-cpp-targets.cmake
+#10 19.75 -- Installing: /opt/devkitpro/portlibs/3ds/share/cmake/yaml-cpp/yaml-cpp-targets-noconfig.cmake
+#10 19.75 -- Installing: /opt/devkitpro/portlibs/3ds/share/cmake/yaml-cpp/yaml-cpp-config.cmake
+#10 19.75 -- Installing: /opt/devkitpro/portlibs/3ds/share/cmake/yaml-cpp/yaml-cpp-config-version.cmake
+#10 19.75 -- Installing: /opt/devkitpro/portlibs/3ds/share/pkgconfig/yaml-cpp.pc
+#10 19.75 portlibs ready in /opt/devkitpro/portlibs/3ds
+#10 DONE 19.8s
+
+#11 [6/6] WORKDIR /work
+#11 DONE 0.0s
+
+#12 exporting to image
+#12 exporting layers
+#12 exporting layers 3.7s done
+#12 exporting manifest sha256:4a1a044c2f005963767ea5ae7ed7a0e90df6fa46003ee6b10fd95c2b8ea59db2 done
+#12 exporting config sha256:8fba7d34ff60824a6a3d257b902d44078e5e02b22ed3ddcb80cb996df4ac10cd done
+#12 exporting attestation manifest sha256:73892fb5f829d8275aaf72a644f773e68f936ab2bfd39a73e6c802fb5d2db96f done
+#12 exporting manifest list sha256:f30aa223fea24e06a1e83e15e8da5a861022c7394b4f45fe9a70da8d0d9caf5e done
+#12 naming to docker.io/library/openxcom-3ds:latest done
+#12 unpacking to docker.io/library/openxcom-3ds:latest
+#12 unpacking to docker.io/library/openxcom-3ds:latest 0.8s done
+#12 DONE 4.5s

@@ -103,9 +103,44 @@ static void buildColours(SDL_Color *pal)
 static Text *g_text = 0;          // scratch renderer, colour 0 -> raw glyph values
 static Game *g_game = 0;
 
-static int text(Surface *top, int x, int y, const std::string &s, Col c, bool big = false, int w = W)
+// Pixel width of the rightmost inked column the game's font gives a string.
+static int inkWidth(const std::string &s, bool big)
+{
+	if (big) g_text->setBig(); else g_text->setSmall();
+	g_text->setX(0); g_text->setY(0);
+	g_text->setColor(0);
+	g_text->setText(s);
+	g_text->clear();
+	g_text->draw();
+	SDL_Surface *src = g_text->getSurface();
+	int maxx = -1;
+	for (int yy = 0; yy < src->h; ++yy)
+	{
+		const Uint8 *sp = (const Uint8 *)src->pixels + yy * src->pitch;
+		for (int xx = 0; xx < src->w; ++xx) if (sp[xx] && xx > maxx) maxx = xx;
+	}
+	return maxx + 1;
+}
+
+// OX-10: a string wider than its box is cut on a glyph boundary (a whole UTF-8 character, never
+// half of one) and ends in "...", instead of being clipped through the middle of a letter.
+static std::string fitToWidth(const std::string &s, bool big, int avail)
+{
+	if (inkWidth(s, big) <= avail) return s;
+	std::string t = s;
+	while (!t.empty())
+	{
+		do t.erase(t.size() - 1); while (!t.empty() && ((unsigned char)t[t.size() - 1] & 0xC0) == 0x80);   // drop one whole character
+		while (!t.empty() && t[t.size() - 1] == ' ') t.erase(t.size() - 1);
+		if (inkWidth(t + "...", big) <= avail) return t + "...";
+	}
+	return "";
+}
+
+static int text(Surface *top, int x, int y, const std::string &str_, Col c, bool big = false, int w = W)
 {
 	if (!g_text) return 0;
+	const std::string s = fitToWidth(str_, big, std::min(w, W - x));
 	if (big) g_text->setBig(); else g_text->setSmall();
 	g_text->setX(0); g_text->setY(0);
 	g_text->setColor(0);
@@ -252,7 +287,6 @@ static void drawRoster(Surface *top, SavedBattleGame *battle, BattleUnit *sel, i
 		++k;
 		if (u == sel) rect(top, x, y, cw - 2, 9, C_FRAME);
 		std::string nm = u->getName(g_game->getLanguage());
-		if (nm.size() > 9) nm = nm.substr(0, 9);
 		const bool out = u->isOut();
 		text(top, x + 1, y, nm, out ? C_BAD : (u == sel ? C_TITLE : C_TEXT), false, 56);
 		if (out) { text(top, x + 58, y, "DOWN", C_BAD); continue; }

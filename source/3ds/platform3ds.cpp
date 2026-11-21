@@ -224,8 +224,9 @@ bool g_userFlip = false;                      // SELECT / Swap: flip the automat
 int g_lastAutoTop = -1;
 const Uint8 kMark = 0x3D;                     // "which" tag on events we post
 const Uint8 kPad = 0x3E;                      // tag on pad-button keys we generate from the HID state
-// touch -> game space: each 320x200 half is drawn 1:1, centred (y 20..219)
-inline int touchToGameY(int py) { return py - 20; }
+// touch -> game space (OX-08): the touch screen's 320x200 is stretched to 320x240, so no bars (X-COM's
+// 320x200 was always shown 4:3 on a VGA monitor, so the stretch is its real aspect)
+inline int touchToGameY(int py) { return std::max(0, std::min(199, py * 200 / 240)); }
 
 void postMotion(int dx, int dy)
 {
@@ -629,7 +630,7 @@ void runPortMenu()
 	{
 		hidScanInput();
 		const u32 down = remapKeys(hidKeysDown()), rep = remapKeys(hidKeysDownRepeat());   // left-handed play
-		PmBtn *bt = page == 0 ? items : page == 1 ? yesno : failno;
+		PmBtn *bt = page == 0 ? items : (page == 1 || page == 3) ? yesno : failno;   // page 3: QUICK LOAD confirm (OX-11)
 		const int n = page == 0 ? 6 : 2;
 		if (pressFrames && !--pressFrames) { pressed = -1; redraw = true; if (action >= 0) break; }
 		if (action < 0 && pressFrames == 0)
@@ -638,6 +639,7 @@ void runPortMenu()
 			{
 				click3ds::play();
 				if (page == 1) { page = 0; focus = 5; redraw = true; }
+				else if (page == 3) { page = 0; focus = 3; redraw = true; }
 				else break;   // page 2 (save failed): back to the game
 			}
 			const u32 prev = page == 0 ? KEY_DUP : KEY_DLEFT, next = page == 0 ? KEY_DDOWN : KEY_DRIGHT;
@@ -660,6 +662,12 @@ void runPortMenu()
 				click3ds::play();
 				focus = hit; pressed = hit; pressFrames = 6; redraw = true;
 				if (page == 0 && hit == 5) { page = 1; focus = 1; pressed = -1; pressFrames = 0; }
+				else if (page == 0 && hit == 3) { page = 3; focus = 1; pressed = -1; pressFrames = 0; }   // OX-11: ask first, focus on NO
+				else if (page == 3)
+				{
+					if (hit == 0) action = 3;
+					else { page = 0; focus = 3; pressed = -1; pressFrames = 0; }
+				}
 				else if (page == 1)
 				{
 					if (hit == 0) action = 10;   // saved after the menu closes (as before OX-01)
@@ -677,6 +685,15 @@ void runPortMenu()
 			{
 				pmFrame(mc, "MENU", g_lefty ? "D-Right Select   D-Down Back   ZL Swap" : "A Select   B Back   ZL Swap");
 				for (int i = 0; i < 6; ++i) pmButton(mc, items[i], i == focus, i == pressed);
+			}
+			else if (page == 3)
+			{
+				pmFrame(mc, "QUICK LOAD", g_lefty ? "D-Right Select   D-Down Back" : "A Select   B Back");
+				const char *q1 = "Load the quick save?";
+				const char *q2 = "Progress since it was saved is lost.";
+				text(mc, (mc.w - 6 * ulen(q1)) / 2, 62, q1, PM_TXT);
+				text(mc, (mc.w - 6 * ulen(q2)) / 2, 80, q2, PM_TXT);
+				for (int i = 0; i < 2; ++i) pmButton(mc, yesno[i], i == focus, i == pressed);
 			}
 			else if (page == 1)
 			{
@@ -1002,7 +1019,7 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev)
 // - The game on the top screen fills it: 320x200 stretched to 400x240 (800x240), nearest pixel,
 //   no side bars. The info panel and the manual text stay 1:1 (exactly 2:1 across in wide mode),
 //   centred, so their text keeps whole pixels.
-// - Touch screen: 320x200 at 1:1, 20 rows down (the touch mapping relies on this).
+// - Touch screen: 320x200 stretched to 320x240 (OX-08; 6:5 pixels, X-COM's real VGA aspect), no bars.
 // The SDL surface is 320x400 RGBA8 (0xRRGGBBAA): rows 0-199 top screen, rows 200-399 touch screen.
 namespace
 {
@@ -1112,7 +1129,7 @@ void openxcom3dsPresent(SDL_Surface *scr, bool gameOnTop, bool ring)
 	fb = gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, &fw, &fh);      // 240 x 320
 	for (int y = 0; y < 240; ++y)
 	{
-		const int sy = y - 20;
+		const int sy = y * kGameH / 240;   // OX-08: stretched, no 20 px bars
 		ymap[y] = (sy >= 0 && sy < kGameH) ? (kGameH + sy) * pitch : -1;
 	}
 	blitScreen(fb, std::min((int)fh, kGameW), pix, ymap, [](int x) { return x; });

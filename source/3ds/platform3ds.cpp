@@ -22,6 +22,9 @@
 #include "../Battlescape/BattlescapeState.h"
 #include "../Geoscape/GeoscapeState.h"
 #include "../Savegame/SavedGame.h"
+#include "../Savegame/SavedBattleGame.h"
+#include "../Savegame/BattleUnit.h"
+#include "../Battlescape/BattlescapeGame.h"
 #include "topscreen3ds.h"
 #include "../Engine/Logger.h"
 #include "../version.h"
@@ -546,11 +549,34 @@ static bool g_pmExitNoSave = false;
 // Rule 17 exit save (EXIT GAME, and HOME > Close since OX-03): the quick save QUICK LOAD
 // and Load > Quick save pick up. Nothing to save (main menu, no game, Ironman, which
 // Game::quit saves itself) counts as done. False only when the save itself failed.
+// OX-02: why the last exit save was not made although it was asked for (0: it failed, or
+// it was made). A battle is saved only at a quiet point of the player's own turn: during the
+// alien turn, or while an action, reaction fire or panic is still being played out, the save
+// would capture a half-run turn. The quick save already there is left as it was.
+static const char *g_exitNotSavedWhy = 0;
+static const char *exitSaveRefusal(OpenXcom::SavedGame *sg, Ctx ctx)
+{
+	if (ctx != CTX_BATTLE || !sg) return 0;
+	OpenXcom::SavedBattleGame *sb = sg->getSavedBattle();
+	if (!sb) return 0;
+	if (sb->getSide() != OpenXcom::FACTION_PLAYER) return "it is the aliens' turn";
+	OpenXcom::BattlescapeGame *bg = sb->getBattleGame();
+	if (bg && (bg->isBusy() || !bg->getPanicHandled())) return "an action is still running";
+	return 0;
+}
+
 static bool exitQuickSave(Ctx ctx)
 {
 	OpenXcom::Game *g = OpenXcom::State::game3ds();
 	OpenXcom::SavedGame *sg = g ? g->getSavedGame() : 0;
+	g_exitNotSavedWhy = 0;
 	if (!g || ctx == CTX_MENU || !sg || sg->isIronman()) return true;
+	if (const char *why = exitSaveRefusal(sg, ctx))
+	{
+		g_exitNotSavedWhy = why;
+		printf("3ds: exit save refused: %s\n", why);
+		return false;
+	}
 	try
 	{
 		sg->setName(OpenXcom::SavedGame::QUICKSAVE);
@@ -661,8 +687,10 @@ void runPortMenu()
 			}
 			else
 			{
-				pmFrame(mc, "SAVE FAILED", g_lefty ? "D-Right Select   D-Down Back" : "A Select   B Back");
-				const char *q1 = "! The quick save failed (SD card full?).";
+				pmFrame(mc, g_exitNotSavedWhy ? "NOT SAVED" : "SAVE FAILED", g_lefty ? "D-Right Select   D-Down Back" : "A Select   B Back");
+				char refused[64];
+				if (g_exitNotSavedWhy) snprintf(refused, sizeof refused, "! Not saved: %s.", g_exitNotSavedWhy);
+				const char *q1 = g_exitNotSavedWhy ? refused : "! The quick save failed (SD card full?).";
 				const char *q2 = "Exit without saving? NO goes back.";
 				text(mc, (mc.w - 6 * ulen(q1)) / 2, 62, q1, PM_TXT);
 				text(mc, (mc.w - 6 * ulen(q2)) / 2, 80, q2, PM_TXT);
@@ -857,7 +885,8 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev)
 		{
 			saved = true;
 			const bool ok = exitQuickSave(context(0));
-			OpenXcom::Logger().get(OpenXcom::LOG_INFO) << "3ds HOME close: exit save " << (ok ? "ok" : "failed");
+			OpenXcom::Logger().get(OpenXcom::LOG_INFO) << "3ds HOME close: exit save "
+				<< (ok ? "ok" : g_exitNotSavedWhy ? g_exitNotSavedWhy : "failed");
 		}
 		return true;
 	}

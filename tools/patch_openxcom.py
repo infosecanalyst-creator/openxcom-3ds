@@ -252,3 +252,37 @@ rw(SC,
    "\tif (SDL_Flip(_screen) == -1)\n\t{\n\t\tthrow Exception(SDL_GetError());\n\t}\n#endif\n",
    "openxcom3dsPresent(_screen")
 print("done")
+
+# ------------------------------------- OX-04: openxcom.log off the SD card's hot path
+# Upstream opens, appends, flushes and closes openxcom.log for every line (100-200 ms each
+# on the 3DS SD card). On 3DS the port keeps the file open (3ds/platform3ds.cpp,
+# openxcom3dsLogLine): without sdmc:/3ds/openxcom/debug.txt only warnings and errors are
+# logged (flushed at once); with it everything, buffered and rolled over at 1 MB.
+LG = "src/Engine/Logger.h"
+rw(LG,
+   "#include \"CrossPlatform.h\"\n\nnamespace OpenXcom\n{\n",
+   "#include \"CrossPlatform.h\"\n\n#ifdef __3DS__\nvoid openxcom3dsLogLine(const char *path, const char *line); // 3ds/platform3ds.cpp\n#endif\n\n"
+   "namespace OpenXcom\n{\n",
+   "void openxcom3dsLogLine(const char *path, const char *line);")
+rw(LG,
+   "\tFILE *file = fopen(logFile().c_str(), \"a\");\n\tif (file)\n\t{\n\t\tfprintf(file, \"%s\", ss.str().c_str());\n"
+   "\t\tfflush(file);\n\t\tfclose(file);\n\t}\n"
+   "\tif (!file || reportingLevel() == LOG_DEBUG || reportingLevel() == LOG_VERBOSE)\n\t{\n"
+   "\t\tfprintf(stderr, \"%s\", os.str().c_str());\n\t\tfflush(stderr);\n\t}\n",
+   "#ifdef __3DS__\n\topenxcom3dsLogLine(logFile().c_str(), ss.str().c_str()); // 3DS: file kept open (OX-04)\n#else\n"
+   "\tFILE *file = fopen(logFile().c_str(), \"a\");\n\tif (file)\n\t{\n\t\tfprintf(file, \"%s\", ss.str().c_str());\n"
+   "\t\tfflush(file);\n\t\tfclose(file);\n\t}\n"
+   "\tif (!file || reportingLevel() == LOG_DEBUG || reportingLevel() == LOG_VERBOSE)\n\t{\n"
+   "\t\tfprintf(stderr, \"%s\", os.str().c_str());\n\t\tfflush(stderr);\n\t}\n#endif\n",
+   "3DS: file kept open (OX-04)")
+rw(M,
+   "\tif (Options::verboseLogging)\n\t\tLogger::reportingLevel() = LOG_VERBOSE;\n",
+   "#ifdef __3DS__\n\topenxcom3dsLogStart(); // OX-04: warnings and errors only, unless debug.txt\n#endif\n"
+   "\tif (Options::verboseLogging)\n\t\tLogger::reportingLevel() = LOG_VERBOSE;\n",
+   "openxcom3dsLogStart(); // OX-04")
+rw(M,
+   "\tgame->setState(new StartState);\n\tgame->run();\n",
+   "\tgame->setState(new StartState);\n\tgame->run();\n"
+   "#ifdef __3DS__\n\tLogger().get(LOG_INFO) << \"3ds exit\"; // one line, always (OX-04)\n#endif\n",
+   "\"3ds exit\"; // one line, always (OX-04)")
+print("done")

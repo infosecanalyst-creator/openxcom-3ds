@@ -4,6 +4,8 @@
 // the lower half of the dual-screen surface).
 union SDL_Event;
 void openxcom3dsInit();
+bool openxcom3dsDebugLog();                  // sdmc:/3ds/openxcom/debug.txt existed at start-up
+void openxcom3dsLogStart();                  // after Options::init: log level + one start line
 void openxcom3dsPumpInput();                 // call once per frame before SDL_PollEvent
 bool openxcom3dsTranslateEvent(SDL_Event &ev); // false = swallow this event
 #include <string>

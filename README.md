@@ -61,6 +61,7 @@ docker run --rm -v "${PWD}:/work" openxcom-3ds ./build-3ds.sh
 GEOGRAPH MAPS ROUTES SOUND TERRAIN UFOGRAPH UNITS folders from your own copy of the
 game to `sdmc:/3ds/openxcom/UFO/`. Saves and `options.cfg` live in
 `sdmc:/3ds/openxcom/user/`.
+Debug log: `user/openxcom.log` gets only warnings, errors and start/exit lines; an empty `sdmc:/3ds/openxcom/debug.txt` turns on the full log (every tap and key), buffered and rolled over at 1 MB.
 
 To build the data into the `.3dsx` instead, put the folders in `./xcom-data/` and run
 with `-e BAKE_DATA=1`. **That file then contains the game itself: keep it on your own

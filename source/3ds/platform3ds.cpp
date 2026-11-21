@@ -24,6 +24,8 @@
 #include "../Savegame/SavedGame.h"
 #include "topscreen3ds.h"
 #include "../Engine/Logger.h"
+#include "../version.h"
+#include <string>
 #include <typeinfo>
 
 // yaml-cpp's ruleset parsing is deeply recursive; give the main thread a
@@ -72,8 +74,66 @@ static void requireNew3ds()
 	exit(0);
 }
 
+// ---- log (OX-04) ---------------------------------------------------------------
+// openxcom.log: upstream opened, appended, flushed and closed the file for every line.
+// Here it stays open. Without debug.txt the level is WARNING (plus the port's own start,
+// exit and HOME-close lines) and each line is flushed at once; they are rare. With
+// sdmc:/3ds/openxcom/debug.txt (checked once at start-up) the upstream level and the
+// port's per-tap / per-key diagnostics come back, buffered, rolled over at 1 MB.
+static int g_debugLog = -1;
+static FILE *g_logFile = 0;
+static long g_logBytes = 0;
+static char g_logPath[256] = "";
+
+bool openxcom3dsDebugLog()
+{
+	if (g_debugLog < 0)
+	{
+		FILE *f = fopen("sdmc:/3ds/openxcom/debug.txt", "r");
+		g_debugLog = f ? 1 : 0;
+		if (f) fclose(f);
+	}
+	return g_debugLog != 0;
+}
+
+void openxcom3dsLogLine(const char *path, const char *line)
+{
+	if (g_logFile && (strcmp(path, g_logPath) != 0 || g_logBytes > 1024 * 1024))
+	{
+		fclose(g_logFile);
+		g_logFile = 0;
+		if (strcmp(path, g_logPath) == 0)   // 1 MB: roll over to openxcom.log.old
+		{
+			std::string old = std::string(path) + ".old";
+			remove(old.c_str());
+			rename(path, old.c_str());
+		}
+	}
+	if (!g_logFile)
+	{
+		g_logFile = fopen(path, "a");
+		if (!g_logFile) return;
+		snprintf(g_logPath, sizeof(g_logPath), "%s", path);
+		setvbuf(g_logFile, 0, _IOFBF, 16384);
+		fseek(g_logFile, 0, SEEK_END);
+		g_logBytes = ftell(g_logFile);
+	}
+	int n = fputs(line, g_logFile);
+	if (n >= 0) g_logBytes += (long)strlen(line);
+	if (!openxcom3dsDebugLog() || strstr(line, "[FATAL]") || strstr(line, "[ERROR]")) fflush(g_logFile);
+}
+
+void openxcom3dsLogStart()
+{
+	if (!openxcom3dsDebugLog())
+		OpenXcom::Logger::reportingLevel() = OpenXcom::LOG_WARNING;
+	OpenXcom::Logger().get(OpenXcom::LOG_INFO) << "3ds start: OpenXcom " << OPENXCOM_VERSION_SHORT
+		<< (openxcom3dsDebugLog() ? " (debug log on: debug.txt)" : "");
+}
+
 void openxcom3dsInit()
 {
+	(void)openxcom3dsDebugLog();     // decided once, at start-up
 	requireNew3ds();
 	osSetSpeedupEnable(true);        // New 3DS: 804 MHz + L2 cache
 	romfsInit();
@@ -175,7 +235,7 @@ void postMotion(int dx, int dy)
 void postButton(Uint8 button, bool down)
 {
 	if (down) g_buttons |= SDL_BUTTON(button); else g_buttons &= ~SDL_BUTTON(button);
-	if (down)
+	if (down && openxcom3dsDebugLog())   // per-tap diagnostics: debug.txt only (OX-04)
 	{
 		OpenXcom::Game *g = OpenXcom::State::game3ds();
 		OpenXcom::State *st = g ? g->getTopState3ds() : 0;
@@ -818,7 +878,7 @@ bool openxcom3dsTranslateEvent(SDL_Event &ev)
 		         || k == SDLK_RETURN || k == SDLK_ESCAPE || k == SDLK_LSHIFT || k == SDLK_RSHIFT
 		         || k == SDLK_UP || k == SDLK_DOWN || k == SDLK_LEFT || k == SDLK_RIGHT))
 			return false;                                      // 3ds-sdl's copy of a button we already generate
-		if (down) // diagnostics (stuck-screen report): what each button press meets
+		if (down && openxcom3dsDebugLog()) // diagnostics (stuck-screen report): what each button press meets; debug.txt only
 			OpenXcom::Logger().get(OpenXcom::LOG_INFO) << "3ds key " << (int)k << (ev.key.which == kMark ? " (pad)" : "")
 			              << " ctx " << (int)ctx << " state " << (st ? typeid(*st).name() : "-")
 			              << " gameOnTop " << openxcom3dsGameOnTop();

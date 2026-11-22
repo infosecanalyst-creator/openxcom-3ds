@@ -466,19 +466,23 @@ public:
             const bool sel = m_bar_focus ? barSel : b.section == m_sec;
             const bool down = m_press_frames > 0 && b.section == m_press_btn;
             const bool cur = b.section == m_sec;   // the section being read keeps its colour
-            fill(cv, b.x, b.y, b.w, b.h, close ? 120 : cur ? 70 : 40, close ? 40 : cur ? 70 : 42,
-                 close ? 40 : cur ? 120 : 62);
+            // house look (OPENXCOM-U9): the shared button face, the section being read a shade
+            // lighter, Close like any other button
+            fill(cv, b.x, b.y, b.w, b.h, cur ? 60 : 40, cur ? 80 : 56, cur ? 160 : 120);
+            (void)close;
             if (down)
             {
                 // pushed in: brighter face, dark inner edge at top/left
-                fill(cv, b.x, b.y, b.w, b.h, close ? 150 : 95, close ? 60 : 95, close ? 60 : 150);
+                fill(cv, b.x, b.y, b.w, b.h, 220, 180, 60);
                 fill(cv, b.x, b.y, b.w, 2, 20, 20, 30);
                 fill(cv, b.x, b.y, 2, b.h, 20, 20, 30);
             }
-            if (sel)
+            if (sel)   // gold ring, all four sides
             {
-                fill(cv, b.x, b.y, b.w, 1, 250, 230, 120);
-                fill(cv, b.x, b.y + b.h - 1, b.w, 1, 250, 230, 120);
+                fill(cv, b.x, b.y, b.w, 2, 255, 204, 64);
+                fill(cv, b.x, b.y + b.h - 2, b.w, 2, 255, 204, 64);
+                fill(cv, b.x, b.y, 2, b.h, 255, 204, 64);
+                fill(cv, b.x + b.w - 2, b.y, 2, b.h, 255, 204, 64);
             }
             const std::string &t = close ? std::string("Close") : tog ? m_toggle : m_sections[b.section].title;
             const int tw = std::min(ulen(t) * 6, b.w - 8);

@@ -114,7 +114,7 @@ held). The Circle Pad moves the cursor on whichever screen the game is on.
 | ZR | - | - | view level up (tap) / down (hold) |
 | ZL | swap screens | swap screens | swap screens |
 | Touch, game on top | touchpad (slide, tap; R + tap = right click) | same | same; tap the close-up map to click a square |
-| Start | port menu (QUICK SAVE, QUICK LOAD and GAME OPTIONS greyed out) | port menu: RESUME, MANUAL, QUICK SAVE, QUICK LOAD, GAME OPTIONS, EXIT GAME | same as Geoscape |
+| Start | port menu (third button is CONTINUE: newest exit or quick save; QUICK LOAD and SAVE / LOAD / OPTIONS greyed out) | port menu: RESUME, MANUAL, QUICK SAVE, QUICK LOAD, SAVE / LOAD / OPTIONS, EXIT GAME | same as Geoscape |
 
 Input notes: 3ds-sdl's own touch-to-mouse events are dropped (in dual-screen
 mode it clamps the touch position to the top half). The touch screen is read
@@ -127,8 +127,8 @@ how the layout and input are tested before hardware.
 
 ## In-game manual
 
-Start opens the port menu (RESUME, MANUAL, QUICK SAVE, QUICK LOAD, GAME OPTIONS,
-EXIT GAME; EXIT GAME and HOME > Close quick-save a game in progress first and ask before quitting if that save fails; in a battle the save is refused during the alien turn or mid-action and says so. QUICK LOAD asks first, with NO selected).
+Start opens the port menu on the touch screen (RESUME, MANUAL, QUICK SAVE, QUICK LOAD, SAVE / LOAD / OPTIONS,
+EXIT GAME; EXIT GAME and HOME > Close save a game in progress to its own "Exit save" file first, leaving the quick save alone, and ask before quitting if that save fails; in a battle the save is refused during the alien turn or mid-action and says so. QUICK LOAD asks first, with NO selected).
 MANUAL opens the built-in manual (text on the top screen, section buttons on
 the touch screen; Circle Pad / C-Stick scroll, D-pad moves between sections,
 L/R change section, B or Start closes). The main menu's version line shows the

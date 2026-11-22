@@ -30,3 +30,8 @@ void openxcom3dsPresent(SDL_Surface *scr, bool gameOnTop, bool ring = true);
 // already waited for the vertical blank): skip the blits and the present.
 bool openxcom3dsFrameChanged(SDL_Surface *screen, SDL_Surface *game, SDL_Surface *top, bool gameOnTop);
 void openxcom3dsInvalidateFrame();           // the next flip draws a full frame
+// OPENXCOM-U1: a 400 x 240 RGB888 picture (row-major) the presenter shows 1:1 on the top screen
+// in place of rows 0-199 of the SDL surface while the game is on the touch screen. 0 = none.
+// Call it again whenever the picture changes.
+#include <stdint.h>
+void openxcom3dsSetTopWide(const uint8_t *rgb);

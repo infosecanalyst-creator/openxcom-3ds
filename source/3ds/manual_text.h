@@ -9,7 +9,7 @@ The game has two halves:
 - The Geoscape: the world map, where time passes, UFOs appear and you run your bases.
 - The Battlescape: turn-based ground combat with your soldiers.
 
-Press Start at any time for the menu: Resume, Manual, Quick Save, Quick Load, Game Options and Exit Game. The game waits underneath. See Saving and loading for what each one does.
+Press Start at any time for the menu: Resume, Manual, Quick Save, Quick Load, Save / Load / Options and Exit Game. The game waits underneath. See Saving and loading for what each one does.
 
 ## Using this manual
 - Circle Pad or C-Stick up/down: scroll the text (hold to keep scrolling).
@@ -21,15 +21,15 @@ Press Start at any time for the menu: Resume, Manual, Quick Save, Quick Load, Ga
 ## In battle
 The battle is on the top screen. The touch screen is the battle pad:
 - Left: a close-up map around the camera. Tap a square to click it in the battle: the first tap shows the path and its TU cost, a second tap on the same square moves there. While aiming, tap the target.
-- Right: the selected soldier: TU, health, energy, morale, weapons, and the accuracy and TU of each shot.
+- Right: the selected soldier: TU, health, energy, morale, weapons, and the accuracy and TU of each shot. Under it, the buttons for kneel, end turn and view level are named; after the first press of the end-turn button it says to press again.
 - Buttons: Prev / Next soldier, Kneel, Inventory, Center, Map, Level up / down, L hand / R hand (fire, throw, use), Swap, End turn (tap twice).
 - The rest of the touch screen is also a touchpad for the cursor on the top screen: slide anywhere except the buttons to move the cursor (like a laptop's touchpad). A quick tap outside the map clicks where the cursor points; hold R while you tap for a right click (turns the soldier).
 Circle Pad and A also work on the top screen: move the cursor, A clicks, B turns the soldier.
 The battle fills the whole top screen.
-Windows that need the stylus (inventory, the fire-mode menu, messages) come down to the touch screen by themselves and go back up when they close.
+Windows that need the stylus (inventory, the map, the fire-mode menu, the game's own options) come down to the touch screen by themselves and go back up when they close. While one is open, the top screen is the battle dashboard and its bottom line says so. The short "Saving game" message does not move the battle.
 
 ## Geoscape, bases and menus
-The game is on the touch screen and fills it from edge to edge (no black bars): tap it with the stylus as if it were a mouse. The top screen shows what you would otherwise open a window for: date, funds, UFOs on radar, research and manufacture, each base's staff and craft.
+The game is on the touch screen and fills it from edge to edge (no black bars): tap it with the stylus as if it were a mouse. The top screen shows what you would otherwise open a window for: date, funds, UFOs on radar, research and manufacture, each base's staff and craft. It fills the whole top screen. On the main menu, and while you set up a New Battle, it shows the buttons instead.
 
 ## ZL: swap
 ZL (or the Swap button) puts the game on the other screen, at any time. The game then fills the top screen, and the touch screen (apart from its Swap button) is a touchpad: slide to move the cursor, tap to click where it points, hold R and tap for a right click. While the game is on top, R does its own job (next soldier, zoom in) when you let go of it, unless you tapped with it.
@@ -67,7 +67,7 @@ When a name field opens (a new base, a soldier, a save), the 3DS keyboard appear
 | Y | Globe: bases. Battle: kneel
 | ZR | Battle: view level up (hold: down)
 | ZL | Swap the screens
-| Start | Menu (manual, quick save, quick load, options, exit)
+| Start | Menu (manual, quick save, quick load, save / load / options, exit)
 
 # Starting a campaign
 1. Choose New Game and a difficulty. Beginner is a good first choice.
@@ -158,12 +158,16 @@ Everything you research unlocks entries in the Ufopaedia: weapons, armour, craft
 
 # Saving and loading
 ## The Start menu
-Start opens a menu of big buttons: RESUME, MANUAL, QUICK SAVE, QUICK LOAD, GAME OPTIONS and EXIT GAME. Tap one, or use the D-pad and A. B or Start closes it. On the main menu, QUICK SAVE, QUICK LOAD and GAME OPTIONS are greyed out because there is no game to save yet.
-- QUICK SAVE writes the quick save slot.
+Start opens a menu of six big buttons on the touch screen: RESUME, MANUAL, QUICK SAVE, QUICK LOAD, SAVE / LOAD / OPTIONS and EXIT GAME. Tap one, or use the D-pad and A. B or Start closes it. The top screen says what each one does.
+- QUICK SAVE writes the one quick save slot. Nothing else writes to it.
 - QUICK LOAD asks first ("Load the quick save?"). The choice starts on NO; YES loads it and you lose progress since it was saved.
-- EXIT GAME quick-saves a game in progress first, then quits. If the save fails (SD card full?) it says SAVE FAILED and asks before quitting.
-- In a battle, the exit save is made only at a quiet moment of your own turn. During the alien turn or while an action is still playing out it says NOT SAVED and why, leaves the old quick save as it was, and asks before quitting. Wait for your turn and try again.
+- SAVE / LOAD / OPTIONS opens the game's own menu, where saves have names (see Saving by hand). It opens with the pointer on Cancel.
+- EXIT GAME asks first (the choice starts on NO). YES saves a game in progress to its own file, shown as "Exit save" in Load Game, then quits. Your quick save and your named saves are not touched. If the save fails (SD card full?) it says SAVE FAILED and asks before quitting.
+- In a battle, the exit save is made only at a quiet moment of your own turn. During the alien turn or while an action is still playing out it says NOT SAVED and why, leaves your saves as they were, and asks before quitting. Wait for your turn and try again.
 - Closing the game from the HOME menu does the same as EXIT GAME.
+
+## Coming back
+On the main menu press Start. The third button there is CONTINUE: it loads your newest exit save or quick save, whichever is newer. It is greyed out when there is neither. You can also choose Load Game and pick "Exit save" from the list.
 
 ## Saving by hand
 - Geoscape: Options, then Save Game or Load Game.

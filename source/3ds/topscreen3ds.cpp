@@ -42,6 +42,7 @@
 #include "../Savegame/Production.h"
 #include "../Savegame/ResearchProject.h"
 #include "../Battlescape/Pathfinding.h"
+#include "../Savegame/Country.h"
 #include "platform3ds.h"
 #include "click3ds.h"
 
@@ -52,7 +53,9 @@ namespace OpenXcom
 namespace TopScreen3DS
 {
 
-static const int W = 320, H = 200;
+// The canvas being drawn. 320 x 200 for the battle pad (it is the touch screen then); 400 x 240
+// for the dashboards on the top screen (OPENXCOM-U1: they fill it, no 40 px side bars).
+static int W = 320, H = 200;
 
 // ---- colours: nearest entry in the live palette ------------------------
 struct Rgb { int r, g, b; };
@@ -70,7 +73,7 @@ static Uint8 nearest(SDL_Color *pal, Rgb c)
 
 enum Col { C_TEXT, C_DIM, C_TITLE, C_GOOD, C_WARN, C_BAD, C_BLUE, C_FRAME, C_BG, C_PANEL, C_COUNT };
 static const Rgb kRgb[C_COUNT] = {
-	{ 230, 230, 230 }, { 140, 140, 150 }, { 250, 220, 90 }, { 90, 210, 90 },
+	{ 230, 230, 230 }, { 186, 190, 204 }, { 250, 220, 90 }, { 90, 210, 90 },   // OPENXCOM-U7: C_DIM was 140,140,150 (too dim for 7 px labels)
 	{ 230, 170, 60 }, { 220, 60, 50 }, { 90, 150, 240 }, { 70, 90, 140 },
 	{ 0, 0, 0 }, { 16, 20, 34 },
 };
@@ -101,6 +104,8 @@ static void buildColours(SDL_Color *pal)
 
 // ---- text through the game's fonts ---------------------------------------
 static Text *g_text = 0;          // scratch renderer, colour 0 -> raw glyph values
+static Surface *g_wide = 0;       // the 400 x 240 top-screen dashboard (OPENXCOM-U1)
+static bool g_wideShown = false;
 static Game *g_game = 0;
 
 // Pixel width of the rightmost inked column the game's font gives a string.
@@ -160,6 +165,21 @@ static int text(Surface *top, int x, int y, const std::string &str_, Col c, bool
 			if (sp[xx]) { dp[xx] = g_ramp[c][std::min(7, sp[xx] - 1)]; if (xx > maxx) maxx = xx; }
 	}
 	return x + maxx + 1;
+}
+
+// OPENXCOM-U5: a soldier's name that is too wide for its box is shortened to "F. Surname",
+// then to the surname, instead of ending in "...".
+static std::string soldierName(const std::string &full, bool big, int avail)
+{
+	if (inkWidth(full, big) <= avail) return full;
+	const size_t sp = full.find(' ');
+	if (sp == std::string::npos || sp == 0) return full;
+	const std::string rest = full.substr(full.rfind(' ') + 1);
+	size_t n = 1;
+	while (n < sp && ((unsigned char)full[n] & 0xC0) == 0x80) ++n;   // one whole UTF-8 character
+	const std::string initial = full.substr(0, n) + ". " + rest;
+	if (inkWidth(initial, big) <= avail) return initial;
+	return rest;
 }
 
 static std::string str(const char *fmt, int a, int b = 0)
@@ -229,7 +249,13 @@ static void drawMinimap(Surface *top, SavedBattleGame *battle, int x0, int y0, i
 		const int s = std::max(2, cell);
 		rect(top, ox + p.x * cell - (s - cell) / 2, oy + p.y * cell - (s - cell) / 2, s, s, c);
 	}
-	text(top, x0 + 4, y0 + h - 10, str("Level %d", level + 1), C_DIM);
+}
+
+static int viewLevel(SavedBattleGame *battle)
+{
+	if (BattlescapeState *bs = battle->getBattleState())
+		if (bs->getMap() && bs->getMap()->getCamera()) return bs->getMap()->getCamera()->getViewLevel();
+	return 0;
 }
 
 static std::string itemLine(BattleItem *it)
@@ -253,7 +279,7 @@ static void drawWeaponModes(Surface *top, BattleUnit *u, int x, int y)
 		return;
 	}
 	RuleItem *r = w->getRules();
-	text(top, x, y, itemLine(w), C_TEXT, false, 190);
+	text(top, x, y, itemLine(w), C_TEXT, false, 256);
 	struct M { BattleActionType t; const char *n; int tu; };
 	const M modes[3] = { { BA_SNAPSHOT, "Snap", r->getTUSnap() }, { BA_AIMEDSHOT, "Aimed", r->getTUAimed() },
 	                     { BA_AUTOSHOT, "Auto", r->getTUAuto() } };
@@ -277,25 +303,25 @@ static void drawRoster(Surface *top, SavedBattleGame *battle, BattleUnit *sel, i
 	for (std::vector<BattleUnit*>::iterator i = battle->getUnits()->begin(); i != battle->getUnits()->end(); ++i)
 		if ((*i)->getFaction() == FACTION_PLAYER && (*i)->getOriginalFaction() == FACTION_PLAYER) ++n;
 	if (!n) return;
-	const int cols = 2, rows = (std::min(n, 12) + 1) / 2, cw = w / cols;
+	// two columns of up to seven: name (room for a whole name), TU and health bars
+	const int cols = 2, rows = (std::min(n, 14) + 1) / 2, cw = w / cols, step = 10, nameW = 112;
 	int k = 0;
-	for (std::vector<BattleUnit*>::iterator i = battle->getUnits()->begin(); i != battle->getUnits()->end() && k < 12; ++i)
+	for (std::vector<BattleUnit*>::iterator i = battle->getUnits()->begin(); i != battle->getUnits()->end() && k < 14; ++i)
 	{
 		BattleUnit *u = *i;
 		if (u->getFaction() != FACTION_PLAYER || u->getOriginalFaction() != FACTION_PLAYER) continue;
-		const int x = x0 + (k / rows) * cw, y = y0 + (k % rows) * 9;
+		const int x = x0 + (k / rows) * cw, y = y0 + (k % rows) * step;
 		++k;
-		if (u == sel) rect(top, x, y, cw - 2, 9, C_FRAME);
-		std::string nm = u->getName(g_game->getLanguage());
+		if (u == sel) rect(top, x, y, cw - 2, step, C_FRAME);
 		const bool out = u->isOut();
-		text(top, x + 1, y, nm, out ? C_BAD : (u == sel ? C_TITLE : C_TEXT), false, 56);
-		if (out) { text(top, x + 58, y, "DOWN", C_BAD); continue; }
+		text(top, x + 2, y + 1, soldierName(u->getName(g_game->getLanguage()), false, nameW), out ? C_BAD : (u == sel ? C_TITLE : C_TEXT), false, nameW);
+		if (out) { text(top, x + nameW + 6, y + 1, "DOWN", C_BAD); continue; }
 		UnitStats *st = u->getBaseStats();
-		const int bw = cw - 64;
+		const int bw = cw - nameW - 12;
 		const int tu = st->tu ? (bw * u->getTimeUnits() / st->tu) : 0;
 		const int hp = st->health ? (bw * u->getHealth() / st->health) : 0;
-		rect(top, x + 58, y + 2, std::max(0, tu), 2, C_GOOD);
-		rect(top, x + 58, y + 5, std::max(0, hp), 2, u->getFatalWounds() ? C_BAD : C_WARN);
+		rect(top, x + nameW + 6, y + 2, std::max(0, tu), 3, C_GOOD);
+		rect(top, x + nameW + 6, y + 6, std::max(0, hp), 3, u->getFatalWounds() ? C_BAD : C_WARN);
 	}
 }
 
@@ -307,58 +333,74 @@ static int visibleEnemies(SavedBattleGame *battle)
 	return n;
 }
 
-static void drawBattle(Surface *top, SavedBattleGame *battle)
+// windowOpen: a window of the game (inventory, map, a menu) is on the touch screen right now
+static void drawBattle(Surface *top, SavedBattleGame *battle, bool windowOpen)
 {
 	const bool playerTurn = battle->getSide() == FACTION_PLAYER;
-	text(top, 4, 3, str("TURN %d", battle->getTurn()), C_TITLE, true);
-	text(top, 80, 7, playerTurn ? "X-COM" : (battle->getSide() == FACTION_HOSTILE ? "ALIENS" : "CIVILIANS"),
+	text(top, 6, 3, str("TURN %d", battle->getTurn()), C_TITLE, true);
+	text(top, 86, 7, playerTurn ? "X-COM" : (battle->getSide() == FACTION_HOSTILE ? "ALIENS" : "CIVILIANS"),
 	     playerTurn ? C_GOOD : C_BAD);
 	const int enemies = visibleEnemies(battle);
-	text(top, 130, 7, enemies ? str("%d alien(s) in sight", enemies) : std::string("No aliens in sight"), enemies ? C_BAD : C_DIM);
+	text(top, 140, 7, enemies ? str("%d alien(s) in sight", enemies) : std::string("No aliens in sight"), enemies ? C_BAD : C_TEXT);
+	text(top, 340, 7, str("Level %d", viewLevel(battle) + 1), C_TEXT);   // not printed over the map squares any more
 
-	drawMinimap(top, battle, 222, 22, 96, 96);
+	drawMinimap(top, battle, 280, 22, 118, 118);
 
 	BattleUnit *u = battle->getSelectedUnit();
-	frame(top, 2, 22, 218, 96);
+	frame(top, 2, 22, 276, 118);
 	if (!u || u->getFaction() != FACTION_PLAYER)
 	{
-		text(top, 10, 30, playerTurn ? "No soldier selected (L/R to pick)" : "Enemy movement...", C_DIM);
+		text(top, 10, 30, playerTurn ? "No soldier selected (L/R to pick)" : "Enemy movement...", C_TEXT);
 	}
 	else
 	{
 		UnitStats *st = u->getBaseStats();
-		text(top, 6, 25, u->getName(g_game->getLanguage()), C_TEXT, true, 150);
+		text(top, 6, 25, soldierName(u->getName(g_game->getLanguage()), true, 264), C_TEXT, true, 264);
+		// OPENXCOM-U3: rank, move cost and KNEELING each have their own place on this line
+		// ("Move: 24 TU" used to be drawn over "KNEELING")
 		std::string rank = u->getRankString();
-		if (!rank.empty()) text(top, 6, 41, tr(rank), C_DIM);
-		if (u->isKneeled()) text(top, 160, 41, "KNEELING", C_WARN);
-		// path preview cost (first tap previews, second tap moves)
+		if (!rank.empty()) text(top, 6, 42, tr(rank), C_DIM, false, 96);
 		Pathfinding *pf = battle->getPathfinding();
-		int barW = 212;
-		bar(top, 6, 52, barW, "TU", u->getTimeUnits(), st->tu, C_GOOD);
 		if (pf && pf->isPathPreviewed())
 		{
 			const int cost = pf->getTotalTUCost();
 			const bool ok = cost <= u->getTimeUnits();
-			text(top, 120, 41, str("Move: %d TU", cost), ok ? C_GOOD : C_BAD);
+			text(top, 106, 42, str("Move: %d TU", cost), ok ? C_GOOD : C_BAD, false, 90);
 		}
-		bar(top, 6, 61, barW, "Health", u->getHealth(), st->health, u->getFatalWounds() ? C_BAD : C_GOOD);
-		bar(top, 6, 70, barW, "Energy", u->getEnergy(), st->stamina, C_WARN);
-		bar(top, 6, 79, barW, "Morale", u->getMorale(), 100, C_BLUE);
-		if (u->getFatalWounds()) text(top, 6, 88, str("FATAL WOUNDS: %d", u->getFatalWounds()), C_BAD);
-		else text(top, 6, 88, str("React %d", st->reactions) + str("  Fire %d", st->firing) + str("  Brave %d", st->bravery), C_DIM);
-		drawWeaponModes(top, u, 6, 98);
+		if (u->isKneeled()) text(top, 204, 42, "KNEELING", C_WARN, false, 70);
+		const int barW = 268;
+		bar(top, 6, 54, barW, "TU", u->getTimeUnits(), st->tu, C_GOOD);
+		bar(top, 6, 64, barW, "Health", u->getHealth(), st->health, u->getFatalWounds() ? C_BAD : C_GOOD);
+		bar(top, 6, 74, barW, "Energy", u->getEnergy(), st->stamina, C_WARN);
+		bar(top, 6, 84, barW, "Morale", u->getMorale(), 100, C_BLUE);
+		if (u->getFatalWounds()) text(top, 6, 96, str("FATAL WOUNDS: %d", u->getFatalWounds()), C_BAD);
+		else text(top, 6, 96, str("React %d", st->reactions) + str("   Fire %d", st->firing) + str("   Brave %d", st->bravery), C_DIM);
+		drawWeaponModes(top, u, 6, 110);
 	}
-	frame(top, 2, 120, 316, 62);
-	drawRoster(top, battle, u, 5, 123, 310);
+	frame(top, 2, 142, 396, 78);
+	drawRoster(top, battle, u, 5, 146, 390);
+	const bool lefty = openxcom3dsLefty();
 	if (g_endTurnArmed3ds)
-		text(top, 4, 186, openxcom3dsLefty() ? "Press D-Left again to END TURN  (other buttons cancel)" : "Press X again to END TURN   (any other button cancels)", C_WARN);
+		text(top, 6, 226, lefty ? "Press D-Left again to END TURN  (other buttons cancel)" : "Press X again to END TURN   (any other button cancels)", C_WARN);
+	else if (windowOpen)   // OPENXCOM-X1: say why the battle is not on this screen right now
+		text(top, 6, 226, "Window on the touch screen. The battle returns when it closes.", C_TEXT);
 	else
-		text(top, 4, 186, "Tap: path, tap again: move  L/R soldier  ZL: game on top", C_DIM);
+		text(top, 6, 226, "Tap: path, tap again: move  L/R soldier  ZL swap  START menu", C_TEXT);
+}
+
+// OPENXCOM-U10: New Battle's mission generator builds a stand-in campaign (one base, no
+// countries, $0) before the fight. Its "12:00 1st Jan 1999 $0 / No UFOs on radar" dashboard
+// means nothing there, so the controls card is shown instead.
+static bool skirmishSetup(SavedGame *save)
+{
+	return save && !save->getSavedBattle() && save->getCountries()->empty();
 }
 
 // ---- Geoscape / bases -----------------------------------------------------
 static void drawStrategic(Surface *top, SavedGame *save)
 {
+	const bool wide = W >= 400;       // the top screen; otherwise the 320 x 200 touch-screen pad
+	const int fw = W - 4;             // frame width
 	Language *lang = g_game->getLanguage();
 	GameTime *t = save->getTime();
 	if (t)
@@ -367,73 +409,114 @@ static void drawStrategic(Surface *top, SavedGame *save)
 		std::string date = t->getDayString(lang) + " " + std::string(lang->getString(t->getMonthString())) + str(" %d", t->getYear());
 		text(top, 64, 7, date, C_TEXT);
 	}
-	text(top, 210, 7, Unicode::formatFunding(save->getFunds()), save->getFunds() < 0 ? C_BAD : C_GOOD);
+	text(top, wide ? 290 : 210, 7, Unicode::formatFunding(save->getFunds()), save->getFunds() < 0 ? C_BAD : C_GOOD);
 
 	int ufos = 0;
 	for (std::vector<Ufo*>::iterator i = save->getUfos()->begin(); i != save->getUfos()->end(); ++i)
 		if ((*i)->getDetected()) ++ufos;
-	frame(top, 2, 22, 316, 14);
-	text(top, 8, 25, ufos ? str("UFOs on radar: %d", ufos) : std::string("No UFOs on radar"), ufos ? C_BAD : C_DIM);
+	frame(top, 2, 22, fw, 14);
+	text(top, 8, 25, ufos ? str("UFOs on radar: %d", ufos) : std::string("No UFOs on radar"), ufos ? C_BAD : C_TEXT);
 
 	// Research and manufacturing: the usual reason to open a base screen.
+	const int mx = wide ? 204 : 164;                  // manufacture column
+	const int rnw = wide ? 140 : 108, rdx = wide ? 152 : 118, mnw = wide ? 132 : 100, mcx = wide ? 342 : 268;
+	const int boxH = wide ? 84 : 64;
 	int y = 40;
-	frame(top, 2, y, 316, 64);
+	frame(top, 2, y, fw, boxH);
 	text(top, 8, y + 3, "RESEARCH", C_TITLE);
-	text(top, 164, y + 3, "MANUFACTURE", C_TITLE);
+	text(top, mx, y + 3, "MANUFACTURE", C_TITLE);
 	int ry = y + 14, my = y + 14;
 	for (std::vector<Base*>::iterator b = save->getBases()->begin(); b != save->getBases()->end(); ++b)
 	{
 		const std::vector<ResearchProject*> &rp = (*b)->getResearch();
-		for (std::vector<ResearchProject*>::const_iterator r = rp.begin(); r != rp.end() && ry < y + 60; ++r)
+		for (std::vector<ResearchProject*>::const_iterator r = rp.begin(); r != rp.end() && ry < y + boxH - 4; ++r)
 		{
 			const int spent = (*r)->getSpent(), cost = (*r)->getCost(), sci = (*r)->getAssigned();
 			std::string name = tr((*r)->getRules()->getName());
-			text(top, 8, ry, name, C_TEXT, false, 108);
-			if (sci > 0 && cost > spent) text(top, 118, ry, str("~%dd", (cost - spent + sci - 1) / sci), C_DIM);
-			else text(top, 118, ry, sci ? "done" : "idle", sci ? C_GOOD : C_WARN);
+			text(top, 8, ry, name, C_TEXT, false, rnw);
+			if (sci > 0 && cost > spent) text(top, rdx, ry, str("~%dd", (cost - spent + sci - 1) / sci), C_DIM);
+			else text(top, rdx, ry, sci ? "done" : "idle", sci ? C_GOOD : C_WARN);
 			ry += 9;
 		}
 		const std::vector<Production*> &pp = (*b)->getProductions();
-		for (std::vector<Production*>::const_iterator m = pp.begin(); m != pp.end() && my < y + 60; ++m)
+		for (std::vector<Production*>::const_iterator m = pp.begin(); m != pp.end() && my < y + boxH - 4; ++m)
 		{
 			std::string name = tr((*m)->getRules()->getName());
-			text(top, 164, my, name, C_TEXT, false, 100);
-			text(top, 268, my, str("%d/", (*m)->getAmountProduced()) + str("%d", (*m)->getAmountTotal()), C_DIM);
+			text(top, mx, my, name, C_TEXT, false, mnw);
+			text(top, mcx, my, str("%d/", (*m)->getAmountProduced()) + str("%d", (*m)->getAmountTotal()), C_DIM);
 			my += 9;
 		}
 	}
 	if (ry == y + 14) text(top, 8, ry, "Nothing being researched", C_WARN);
-	if (my == y + 14) text(top, 164, my, "Nothing in production", C_DIM);
+	if (my == y + 14) text(top, mx, my, "Nothing in production", C_DIM);
 
 	// Craft: where they are and whether they can fly.
-	y = 108;
-	frame(top, 2, y, 316, 70);
+	y = wide ? 128 : 108;
+	const int craftH = wide ? 92 : 70, sx = wide ? 170 : 130, fx = wide ? 316 : 236;
+	frame(top, 2, y, fw, craftH);
 	int cy = y + 3;
-	for (std::vector<Base*>::iterator b = save->getBases()->begin(); b != save->getBases()->end() && cy < y + 62; ++b)
+	for (std::vector<Base*>::iterator b = save->getBases()->begin(); b != save->getBases()->end() && cy < y + craftH - 8; ++b)
 	{
-		text(top, 8, cy, (*b)->getName(lang), C_TITLE, false, 120);
-		text(top, 130, cy, str("Soldiers %d", (*b)->getAvailableSoldiers()) + str("  Sci %d", (*b)->getScientists()) + str("  Eng %d", (*b)->getEngineers()), C_DIM);
+		text(top, 8, cy, (*b)->getName(lang), C_TITLE, false, sx - 12);
+		text(top, sx, cy, str("Soldiers %d", (*b)->getAvailableSoldiers()) + str("  Sci %d", (*b)->getScientists()) + str("  Eng %d", (*b)->getEngineers()), C_DIM);
 		cy += 10;
-		for (std::vector<Craft*>::iterator c = (*b)->getCrafts()->begin(); c != (*b)->getCrafts()->end() && cy < y + 62; ++c)
+		for (std::vector<Craft*>::iterator c = (*b)->getCrafts()->begin(); c != (*b)->getCrafts()->end() && cy < y + craftH - 8; ++c)
 		{
 			Craft *cr = *c;
-			text(top, 14, cy, cr->getName(lang), C_TEXT, false, 110);
-			text(top, 130, cy, tr(cr->getStatus()), C_DIM, false, 100);
-			text(top, 236, cy, str("Fuel %d%%", cr->getFuelPercentage()), cr->getFuelPercentage() < 30 ? C_WARN : C_DIM);
+			text(top, 14, cy, cr->getName(lang), C_TEXT, false, sx - 18);
+			text(top, sx, cy, tr(cr->getStatus()), C_DIM, false, fx - sx - 4);
+			text(top, fx, cy, str("Fuel %d%%", cr->getFuelPercentage()), cr->getFuelPercentage() < 30 ? C_WARN : C_DIM);
 			cy += 9;
 		}
 	}
-	text(top, 4, 186, openxcom3dsLefty() ? "L/R zoom  D-Left intercept  D-Up bases  ZL swap" : "L/R zoom  X intercept  Y bases  ZL swap", C_DIM);
+	text(top, 4, H - 14, openxcom3dsLefty() ? "L/R zoom  D-Left intercept  D-Up bases  ZL swap  START menu" : "L/R zoom  X intercept  Y bases  ZL swap  START menu", C_TEXT);
 }
 
 // ---- menus ----------------------------------------------------------------
+// OPENXCOM-U2: the controls card fills the top screen in the house layout (header bar, rows in
+// the game's big font, hint strip). It used to be a 240 x 100 box of small print in the middle
+// of a black screen.
+static void drawControlsCard(Surface *top, const char *right)
+{
+	const bool lefty = openxcom3dsLefty();
+	rect(top, 0, 0, W, 22, C_FRAME);
+	text(top, 6, 3, "OPENXCOM", C_TITLE, true);
+	text(top, 250, 7, right, C_TEXT, false, 146);
+	struct Row { const char *key, *keyLefty, *what; };
+	static const Row rows[11] = {
+		{ "Stylus", "Stylus", "tap = click" },
+		{ "Circle Pad", "Circle Pad", "move the pointer" },
+		{ "A / B", "D-Right / D-Down", "click / back" },
+		{ "D-pad", "A/B/X/Y", "gold ring: jump to buttons" },
+		{ "C-Stick", "C-Stick", "scroll the map or globe" },
+		{ "L / R", "L / R", "soldier (battle), zoom (globe)" },
+		{ "Y", "D-Up", "kneel" },
+		{ "X twice", "D-Left twice", "end turn" },
+		{ "ZR", "ZR", "view level" },
+		{ "ZL", "ZL", "swap screens" },
+		{ "START", "START", "menu: save, manual, exit" },
+	};
+	for (int i = 0; i < 11; ++i)
+	{
+		const int y = 26 + i * 18;
+		text(top, 8, y, lefty ? rows[i].keyLefty : rows[i].key, C_TITLE, true, 150);
+		text(top, 164, y + 4, rows[i].what, C_TEXT, false, 232);
+	}
+	rect(top, 0, H - 16, W, 16, C_FRAME);
+	text(top, 6, H - 13, "Battle: tap a square to see the path, tap again to move.", C_TEXT);
+}
+
 static void drawMenu(Surface *top, bool pad = false)
 {
+	if (!pad && W >= 400) { drawControlsCard(top, "for New 3DS"); return; }
+	// the 320 x 200 touch-screen pad (the game is on the top screen)
 	const std::string title = "OPENXCOM";
-	text(top, 128, 30, title, C_TITLE, true);
-	text(top, 104, 50, "OpenXcom for New 3DS", C_DIM);
-	frame(top, 40, 72, 240, 102);
-	int y = 80;
+	text(top, 128, 6, title, C_TITLE, true);
+	text(top, 104, 24, "OpenXcom for New 3DS", C_TEXT);
+	// OPENXCOM-U4: the card ends above the button row (its last line was cut through the middle
+	// and it had no bottom edge)
+	frame(top, 40, 38, 240, 126);
+	int y = 44;
 	const char *first = pad ? "Touch screen: a touchpad for the game" : "Tap the bottom screen: click";
 	static const char *right[] = {
 		"Circle Pad cursor   A click   B back",
@@ -451,11 +534,12 @@ static void drawMenu(Surface *top, bool pad = false)
 		"Battle: tap to preview a path, tap",
 		"  again to move.  L/R: soldier",
 		"  D-Up: kneel   D-Left x2: end turn",
-		"ZL: swap screens   Start: manual",
+		"ZL: swap screens   Start: menu",
 	};
 	const char *const *rest = openxcom3dsLefty() ? left : right;
-	const char *lines[8] = { first, rest[0], rest[1], rest[2], rest[3], rest[4], rest[5], rest[6] };
-	for (int i = 0; i < 8; ++i, y += 12) text(top, 52, y, lines[i], C_TEXT);
+	const char *lines[10] = { first, rest[0], rest[1], rest[2], rest[3], rest[4], rest[5], rest[6],
+	                          "Slide: move the pointer", "Tap: click   R + tap: right click" };
+	for (int i = 0; i < 10; ++i, y += 12) text(top, 52, y, lines[i], C_TEXT);
 }
 
 // ---- the touch screen while the game is on the top screen -----------------
@@ -507,7 +591,7 @@ static void drawButtons(Surface *top)
 	{
 		const PadBtn &b = g_btn[i];
 		const bool down = b.id == g_flash && now < g_flashUntil;
-		const bool warn = b.id == P_END && g_endArmed;
+		const bool warn = b.id == P_END && (g_endArmed || g_endTurnArmed3ds);   // also after the first X
 		rect(top, b.x, b.y, b.w, b.h, down ? C_TITLE : C_FRAME);
 		rect(top, b.x + 1, b.y + 1, b.w - 2, b.h - 2, down ? C_TITLE : warn ? C_BAD : C_PANEL);
 		if (down)   // pushed in: shadow on the top and left edges
@@ -573,7 +657,6 @@ static void drawCloseMap(Surface *top, SavedBattleGame *battle)
 		rect(top, px, py, kMmCell, 1, C_TITLE); rect(top, px, py + kMmCell - 1, kMmCell, 1, C_TITLE);
 		rect(top, px, py, 1, kMmCell, C_TITLE); rect(top, px + kMmCell - 1, py, 1, kMmCell, C_TITLE);
 	}
-	text(top, g_mmX + 2, g_mmY + w - 10, str("Level %d", g_mmLevel + 1), C_DIM);
 }
 
 static void drawBattlePad(Surface *top, SavedBattleGame *battle)
@@ -583,7 +666,8 @@ static void drawBattlePad(Surface *top, SavedBattleGame *battle)
 	text(top, 50, 2, playerTurn ? "X-COM" : (battle->getSide() == FACTION_HOSTILE ? "ALIENS" : "CIVILIANS"),
 	     playerTurn ? C_GOOD : C_BAD);
 	const int enemies = visibleEnemies(battle);
-	text(top, 100, 2, enemies ? str("%d alien(s) in sight", enemies) : std::string("No aliens in sight"), enemies ? C_BAD : C_DIM);
+	text(top, 100, 2, enemies ? str("%d alien(s) in sight", enemies) : std::string("No aliens in sight"), enemies ? C_BAD : C_TEXT);
+	text(top, 268, 2, str("Level %d", viewLevel(battle) + 1), C_TEXT);   // was printed over the map squares
 	drawCloseMap(top, battle);
 
 	// the selected soldier, right of the map
@@ -634,7 +718,14 @@ static void drawBattlePad(Surface *top, SavedBattleGame *battle)
 				y += 9;
 			}
 		}
-		text(top, rx + 2, 139, "Tap map square: click it", C_DIM, false, rw - 4);
+		// OPENXCOM-X2 / X5: the face buttons are named here during the battle (they were only on
+		// the main menu's card), and after the first X the screen says what the second one does
+		const bool lefty = openxcom3dsLefty();
+		if (g_endTurnArmed3ds)
+			text(top, rx + 2, 139, lefty ? "D-Left again: END TURN" : "X again: END TURN", C_WARN, false, rw - 4);
+		else
+			text(top, rx + 2, 139, "Tap a map square: click it", C_TEXT, false, rw - 4);
+		text(top, rx + 2, 148, lefty ? "D-Up kneel  D-Left x2 end  ZR level" : "Y kneel  X twice end turn  ZR level", C_TEXT, false, rw - 4);
 	}
 
 	// battle buttons: two rows of six
@@ -759,11 +850,12 @@ bool mapTap(Game *game, int x, int y)
 
 static void drawOtherPad(Surface *top, SavedGame *save)
 {
-	if (save) drawStrategic(top, save); else drawMenu(top, true);
+	if (save && !skirmishSetup(save)) drawStrategic(top, save); else drawMenu(top, true);
 	rect(top, 0, 171, W, 29, C_BG);
 	// the rest of the touch screen is a touchpad for the game on the top screen
-	text(top, 6, 181, "Slide: pointer", C_DIM);
-	text(top, 214, 181, "Tap: click  R+tap: right", C_DIM, false, W - 214 - 2);
+	// (OPENXCOM-U4: the two helpers are in the normal text colour, not dim grey)
+	text(top, 6, 181, "Slide: pointer", C_TEXT);
+	text(top, 214, 181, "Tap: click  R+tap: right", C_TEXT, false, W - 214 - 2);
 	g_mmValid = false;
 	g_nbtn = 0;
 	addBtn(110, 175, 100, 20, "Swap screens", P_SWAP);   // rule 11: 24 px tall on screen, 6 px from the bottom
@@ -787,7 +879,7 @@ void render(Game *game, Surface *top)
 	{
 		Font *big = mod->getFont("FONT_BIG", false), *small = mod->getFont("FONT_SMALL", false);
 		if (!big || !small) return;
-		g_text = new Text(W, 18, 0, 0);
+		g_text = new Text(400, 18, 0, 0);
 		g_text->initText(big, small, game->getLanguage());
 	}
 	if (!g_text) return;
@@ -801,15 +893,50 @@ void render(Game *game, Surface *top)
 	SavedGame *save = game->getSavedGame();
 	if (openxcom3dsGameOnTop())      // this surface is the touch screen: the pad
 	{
+		W = 320; H = 200;
+		if (g_wideShown) { g_wideShown = false; openxcom3dsSetTopWide(0); }
 		if (save && save->getSavedBattle()) drawBattlePad(top, save->getSavedBattle());
 		else drawOtherPad(top, save);
 		return;
 	}
 	g_nbtn = 0;
 	g_mmValid = false;
-	if (save && save->getSavedBattle()) drawBattle(top, save->getSavedBattle());
-	else if (save) drawStrategic(top, save);
-	else drawMenu(top);
+	// OPENXCOM-U1: the dashboard is drawn on its own 400 x 240 surface and shown 1:1 on the top
+	// screen (platform3ds.cpp presents it instead of this 320-wide one, which stays blank).
+	if (!g_wide) g_wide = new Surface(400, 240, 0, 0, 8);
+	g_wide->setPalette(s->format->palette->colors, 0, 256);
+	g_wide->clear(0);
+	W = 400; H = 240;
+	if (save && save->getSavedBattle())
+	{
+		BattlescapeState *bs = save->getSavedBattle()->getBattleState();
+		drawBattle(g_wide, save->getSavedBattle(), bs && game->getTopState3ds() != bs);
+	}
+	else if (save && !skirmishSetup(save)) drawStrategic(g_wide, save);
+	else drawMenu(g_wide);
+	W = 320; H = 200;
+	// to RGB for the presenter; it is only told when the picture really changed
+	static std::vector<uint8_t> rgb, prev;
+	rgb.resize(400 * 240 * 3);
+	SDL_Surface *ws = g_wide->getSurface();
+	const SDL_Color *pal = s->format->palette->colors;
+	for (int y = 0; y < 240; ++y)
+	{
+		const Uint8 *sp = (const Uint8 *)ws->pixels + y * ws->pitch;
+		uint8_t *dp = &rgb[y * 400 * 3];
+		for (int x = 0; x < 400; ++x, dp += 3)
+		{
+			const SDL_Color &c = pal[sp[x]];
+			if (sp[x] == 0) { dp[0] = dp[1] = dp[2] = 0; }
+			else { dp[0] = c.r; dp[1] = c.g; dp[2] = c.b; }
+		}
+	}
+	if (!g_wideShown || rgb != prev)
+	{
+		prev = rgb;
+		g_wideShown = true;
+		openxcom3dsSetTopWide(prev.data());
+	}
 }
 
 }

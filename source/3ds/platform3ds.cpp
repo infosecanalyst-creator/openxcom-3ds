@@ -26,6 +26,9 @@
 #include "../Savegame/BattleUnit.h"
 #include "../Battlescape/BattlescapeGame.h"
 #include "topscreen3ds.h"
+#include "../Menu/SaveGameState.h"
+#include "../Menu/LoadGameState.h"
+#include "../Engine/Screen.h"
 #include "../Engine/Logger.h"
 #include "../version.h"
 #include <string>
@@ -134,6 +137,86 @@ void openxcom3dsLogStart()
 		<< (openxcom3dsDebugLog() ? " (debug log on: debug.txt)" : "");
 }
 
+// OPENXCOM-Q2: the port's settings are merged into options.cfg instead of replacing the file.
+// A new port version used to rewrite the whole file with defaults, which silently reset
+// everything the player had changed in Game Options (volumes, battle options, scroll speeds).
+// "need": what the port cannot run without, always set. "nice": touch / quality-of-life
+// defaults, only added when the key is not there yet (the player's own choice is kept).
+// Written to a temporary file, checked, then renamed over the old one.
+static bool mergePortOptions(const char *path)
+{
+	static const char *const need[][2] = {
+		{ "displayWidth", "320" }, { "displayHeight", "200" }, { "fullscreen", "false" },
+		{ "audioBitDepth", "16" }, { "audioSampleRate", "11025" }, { "audioChunkSize", "1024" },
+		{ "playIntro", "false" }, { "useOpenGL", "false" }, { "keepAspectRatio", "false" },
+		{ "dragScrollButton", "1" } };
+	static const char *const nice[][2] = {
+		{ "battleNewPreviewPath", "3" }, { "skipNextTurnScreen", "true" }, { "battleAutoEnd", "true" },
+		{ "battleInstantGrenade", "true" }, { "battleTooltips", "true" }, { "showMoreStatsInInventoryView", "true" },
+		{ "allowBuildingQueue", "true" }, { "craftLaunchAlways", "true" }, { "showFundsOnGeoscape", "true" },
+		{ "globeFlightPaths", "true" }, { "autosave", "true" } };
+	const size_t nNeed = sizeof(need) / sizeof(need[0]), nNice = sizeof(nice) / sizeof(nice[0]);
+	std::vector<std::string> lines;
+	if (FILE *f = fopen(path, "r"))
+	{
+		char buf[512];
+		while (fgets(buf, sizeof(buf), f))
+		{
+			std::string l = buf;
+			while (!l.empty() && (l[l.size() - 1] == '\n' || l[l.size() - 1] == '\r')) l.erase(l.size() - 1);
+			lines.push_back(l);
+		}
+		fclose(f);
+	}
+	// the "options:" block: from that line to the next line that starts in column 0
+	size_t o0 = lines.size(), o1 = lines.size();
+	for (size_t i = 0; i < lines.size(); ++i)
+		if (lines[i].compare(0, 8, "options:") == 0) { o0 = i; break; }
+	if (o0 == lines.size())
+	{
+		lines.insert(lines.begin(), "options:");
+		o0 = 0; o1 = 1;
+	}
+	else
+	{
+		o1 = o0 + 1;
+		while (o1 < lines.size() && (lines[o1].empty() || lines[o1][0] == ' ')) ++o1;
+	}
+	auto findKey = [&](const char *key) -> size_t {
+		const std::string k = std::string("  ") + key + ":";
+		for (size_t i = o0 + 1; i < o1; ++i)
+			if (lines[i].compare(0, k.size(), k) == 0) return i;
+		return lines.size();
+	};
+	for (size_t i = 0; i < nNeed; ++i)
+	{
+		const std::string l = std::string("  ") + need[i][0] + ": " + need[i][1];
+		const size_t at = findKey(need[i][0]);
+		if (at < lines.size()) lines[at] = l;
+		else { lines.insert(lines.begin() + o1, l); ++o1; }
+	}
+	for (size_t i = 0; i < nNice; ++i)
+		if (findKey(nice[i][0]) == lines.size())
+		{
+			lines.insert(lines.begin() + o1, std::string("  ") + nice[i][0] + ": " + nice[i][1]);
+			++o1;
+		}
+	const std::string tmp = std::string(path) + ".tmp";
+	FILE *f = fopen(tmp.c_str(), "w");
+	if (!f) return false;
+	bool ok = true;
+	for (size_t i = 0; i < lines.size() && ok; ++i)
+		ok = fputs(lines[i].c_str(), f) >= 0 && fputc('\n', f) != EOF;
+	ok = (fclose(f) == 0) && ok;
+	if (ok)
+	{
+		remove(path);
+		ok = rename(tmp.c_str(), path) == 0;
+	}
+	if (!ok) remove(tmp.c_str());
+	return ok;
+}
+
 void openxcom3dsInit()
 {
 	(void)openxcom3dsDebugLog();     // decided once, at start-up
@@ -161,23 +244,9 @@ void openxcom3dsInit()
 		if (fgets(line, sizeof(line), f) && strcmp(line, kCfgVersion) == 0) writeCfg = false;
 		fclose(f);
 	}
-	if (writeCfg)
+	if (writeCfg && mergePortOptions("sdmc:/3ds/openxcom/user/options.cfg"))
 	{
-		if (FILE *f = fopen("sdmc:/3ds/openxcom/user/options.cfg", "w"))
-		{
-			fputs("options:\n"
-			      "  displayWidth: 320\n  displayHeight: 200\n  fullscreen: false\n"
-			      "  audioBitDepth: 16\n  audioSampleRate: 11025\n  audioChunkSize: 1024\n"
-			      "  playIntro: false\n  useOpenGL: false\n  keepAspectRatio: false\n"
-			      "  dragScrollButton: 1\n"
-			      // touch/QoL defaults (UX audit): preview a path with the first tap and
-			      // move with the second; fewer confirmation screens; more info shown
-			      "  battleNewPreviewPath: 3\n  skipNextTurnScreen: true\n  battleAutoEnd: true\n"
-			      "  battleInstantGrenade: true\n  battleTooltips: true\n  showMoreStatsInInventoryView: true\n"
-			      "  allowBuildingQueue: true\n  craftLaunchAlways: true\n  showFundsOnGeoscape: true\n"
-			      "  globeFlightPaths: true\n  autosave: true\n", f);
-			fclose(f);
-		}
+		// the version is only recorded once options.cfg is safely written (checked)
 		if (FILE *f = fopen(kVerPath, "w")) { fputs(kCfgVersion, f); fclose(f); }
 	}
 }
@@ -353,6 +422,14 @@ manual3ds::Manual g_manual;
 bool g_manualLoaded = false;
 bool g_touchBlocked = false;    // stylus still down after closing the manual
 
+// OPENXCOM-U1: every page the port draws on the top screen (dashboards, the manual text, the
+// START menu's page) is a full 400 x 240 picture of its own, shown 1:1. It used to be the top
+// half of the 320-wide SDL surface, centred between 40 px black bars. While this is set the
+// presenter shows it instead of rows 0-199 of the SDL surface (unless the game is on top).
+const uint8_t *g_topWide = 0;      // 400 x 240, RGB888, row-major
+unsigned g_topWideGen = 0;         // bumped when the picture changes (frame-skip check)
+std::vector<uint8_t> g_pageTop;    // the manual's / START menu's own top page
+
 void blitCanvas(SDL_Surface *scr, const manual3ds::Canvas &cv, int y0)
 {
 	if (SDL_MUSTLOCK(scr)) SDL_LockSurface(scr);
@@ -421,11 +498,13 @@ void runManual()
 	g_pt = PT_NONE;
 
 	const int half = scr->h / 2;               // 200: top rows, then the touch screen
-	static std::vector<uint8_t> topPx, botPx;
-	topPx.assign(scr->w * half * 3, 0);
+	static std::vector<uint8_t> botPx;
+	g_pageTop.assign(400 * 240 * 3, 0);        // OPENXCOM-U1: the text page fills the top screen
 	botPx.assign(scr->w * half * 3, 0);
-	manual3ds::Canvas top = { scr->w, half, topPx.data() };
+	manual3ds::Canvas top = { 400, 240, g_pageTop.data() };
 	manual3ds::Canvas bot = { scr->w, half, botPx.data() };
+	const uint8_t *const keepWide = g_topWide;
+	g_topWide = g_pageTop.data();
 
 	g_manual.open();
 	hidSetRepeatParameters(20, 6);
@@ -476,7 +555,6 @@ void runManual()
 		{
 			g_manual.draw_top(top);
 			g_manual.draw_bottom(bot);
-			blitCanvas(scr, top, 0);
 			blitCanvas(scr, bot, half);
 			openxcom3dsPresent(scr, false, false);
 			redraw = false;
@@ -493,6 +571,8 @@ void runManual()
 		;
 	g_lastTick = 0;                            // no cursor jump from the long frame
 	g_padPrevHeld = hidKeysHeld();             // B / START still held from closing the manual is not a new press (it opened Options on the Geoscape)
+	g_topWide = keepWide;
+	++g_topWideGen;
 }
 }
 
@@ -556,6 +636,7 @@ static bool g_pmExitNoSave = false;
 // alien turn, or while an action, reaction fire or panic is still being played out, the save
 // would capture a half-run turn. The quick save already there is left as it was.
 static const char *g_exitNotSavedWhy = 0;
+static const char *const kExitSaveFile = "_exit_.sav";
 static const char *exitSaveRefusal(OpenXcom::SavedGame *sg, Ctx ctx)
 {
 	if (ctx != CTX_BATTLE || !sg) return 0;
@@ -579,18 +660,41 @@ static bool exitQuickSave(Ctx ctx)
 		printf("3ds: exit save refused: %s\n", why);
 		return false;
 	}
+	// OPENXCOM-Q1: the exit save has its own file. It used to be written into the one quick
+	// save slot, so quitting replaced the player's safety quick save without a word. It shows
+	// in Load Game as "Exit save"; START > CONTINUE on the main menu loads it.
+	const std::string keepName = sg->getName();
 	try
 	{
-		sg->setName(OpenXcom::SavedGame::QUICKSAVE);
-		sg->save(OpenXcom::SavedGame::QUICKSAVE);
-		printf("3ds: quick-saved on exit\n");
+		sg->setName("Exit save");
+		sg->save(kExitSaveFile);
+		sg->setName(keepName);
+		printf("3ds: exit save written\n");
 		return true;
 	}
 	catch (...)
 	{
-		printf("3ds: quick save on exit failed\n");
+		sg->setName(keepName);
+		printf("3ds: exit save failed\n");
 		return false;
 	}
+}
+
+// The newest of the exit save and the quick save ("" when there is neither): what
+// START > CONTINUE on the main menu loads (OPENXCOM-X4).
+static std::string newestResumeSave()
+{
+	const std::string dir = OpenXcom::Options::getMasterUserFolder();
+	const std::string files[2] = { kExitSaveFile, OpenXcom::SavedGame::QUICKSAVE };
+	std::string best;
+	time_t bestT = 0;
+	for (int i = 0; i < 2; ++i)
+	{
+		struct stat sb;
+		if (stat((dir + files[i]).c_str(), &sb) != 0) continue;
+		if (best.empty() || sb.st_mtime > bestT) { best = files[i]; bestT = sb.st_mtime; }
+	}
+	return best;
 }
 
 void runPortMenu()
@@ -604,23 +708,29 @@ void runPortMenu()
 	const Ctx ctx = context(0);
 	const bool inGame = ctx != CTX_MENU;
 	const int half = scr->h / 2;
-	static std::vector<uint8_t> topPx, botPx;
-	topPx.assign(scr->w * half * 3, 0);
+	// OPENXCOM-U6: the menu's big buttons are always on the touch screen (they used to follow the
+	// game to the top screen in a battle, where they could not be tapped), six full-width rows.
+	// The top screen holds what each row does, on a full 400 x 240 page (OPENXCOM-U1 / U2).
+	static std::vector<uint8_t> botPx;
+	g_pageTop.assign(400 * 240 * 3, 0);
 	botPx.assign(scr->w * half * 3, 0);
-	manual3ds::Canvas top = { scr->w, half, topPx.data() };
-	manual3ds::Canvas bot = { scr->w, half, botPx.data() };
-	const bool onTop = openxcom3dsGameOnTop();      // the menu goes where the game is
-	manual3ds::Canvas &mc = onTop ? top : bot, &ic = onTop ? bot : top;
+	manual3ds::Canvas ic = { 400, 240, g_pageTop.data() };
+	manual3ds::Canvas mc = { scr->w, half, botPx.data() };
+	const uint8_t *const keepWide = g_topWide;
+	g_topWide = g_pageTop.data();
 
+	// OPENXCOM-X4: on the main menu the third row is CONTINUE (the newest exit or quick save)
+	const std::string resume = inGame ? std::string() : newestResumeSave();
+	// 320 x 200 canvas, shown 1.2x taller: rows 28 tall (33 px on screen), 4 apart, 6 from the edges
 	PmBtn items[6] = {
-		{ 70, 24, 180, 22, "RESUME", true }, { 70, 50, 180, 22, "MANUAL", true },
-		{ 70, 76, 180, 22, "QUICK SAVE", inGame }, { 70, 102, 180, 22, "QUICK LOAD", inGame },
-		{ 70, 128, 180, 22, "GAME OPTIONS", inGame }, { 70, 154, 180, 22, "EXIT GAME", true } };
-	PmBtn yesno[2] = { { 40, 110, 110, 30, "YES", true }, { 170, 110, 110, 30, "NO", true } };
-	PmBtn failno[2] = { { 30, 110, 130, 30, "EXIT ANYWAY", true }, { 170, 110, 110, 30, "NO", true } };
-	// Rule 17: a game in progress is quick-saved before EXIT, the same save QUICK LOAD and
-	// Load > Quick save pick up (Ironman games save themselves). OX-01: when it fails
-	// (SD card full or locked) the menu asks before quitting instead of quitting anyway.
+		{ 6, 6, 308, 28, "RESUME", true }, { 6, 38, 308, 28, "MANUAL", true },
+		{ 6, 70, 308, 28, inGame ? "QUICK SAVE" : "CONTINUE", inGame || !resume.empty() }, { 6, 102, 308, 28, "QUICK LOAD", inGame },
+		{ 6, 134, 308, 28, "SAVE / LOAD / OPTIONS", inGame }, { 6, 166, 308, 28, "EXIT GAME", true } };
+	PmBtn yesno[2] = { { 6, 84, 152, 110, "YES", true }, { 162, 84, 152, 110, "NO", true } };
+	PmBtn failno[2] = { { 6, 84, 152, 110, "EXIT ANYWAY", true }, { 162, 84, 152, 110, "NO", true } };
+	// Rule 17: a game in progress is saved before EXIT (its own "Exit save" file; Ironman games
+	// save themselves). OX-01: when it fails (SD card full or locked) the menu asks before
+	// quitting instead of quitting anyway.
 	auto exitSave = [&]() -> bool { return exitQuickSave(ctx); };
 	int page = g_pmStartPage, focus = page == 2 ? 1 : 0, pressed = -1, pressFrames = 0, action = -1;
 	g_pmStartPage = 0;
@@ -651,7 +761,7 @@ void runPortMenu()
 			}
 			int hit = -1;
 			if (down & KEY_A) hit = focus;
-			else if ((down & KEY_TOUCH) && !onTop)
+			else if (down & KEY_TOUCH)
 			{
 				touchPosition tp; hidTouchRead(&tp);
 				const int ty = touchToGameY(tp.py);
@@ -682,48 +792,87 @@ void runPortMenu()
 		if (redraw)
 		{
 			using namespace manual3ds::detail;
-			if (page == 0)
+			static const uint8_t PM_WARN[3] = {255, 150, 90};
+			const char *hint = page == 0 ? (g_lefty ? "A/B/X/Y: choose    D-Right: select    D-Down or START: close" : "D-pad: choose    A: select    B or START: close")
+			                             : (g_lefty ? "D-Right: select    D-Down: back" : "A: select    B: back");
+			// touch screen: the buttons (and, on a question page, the question above them)
+			fill(mc, 0, 0, mc.w, mc.h, 8, 12, 40);
+			const char *q1 = 0, *q2 = 0, *title = inGame ? "PAUSED" : "MAIN MENU";
+			const char *info[4] = { 0, 0, 0, 0 };
+			char refused[64];
+			if (page == 3)
 			{
-				pmFrame(mc, "MENU", g_lefty ? "D-Right Select   D-Down Back   ZL Swap" : "A Select   B Back   ZL Swap");
-				for (int i = 0; i < 6; ++i) pmButton(mc, items[i], i == focus, i == pressed);
-			}
-			else if (page == 3)
-			{
-				pmFrame(mc, "QUICK LOAD", g_lefty ? "D-Right Select   D-Down Back" : "A Select   B Back");
-				const char *q1 = "Load the quick save?";
-				const char *q2 = "Progress since it was saved is lost.";
-				text(mc, (mc.w - 6 * ulen(q1)) / 2, 62, q1, PM_TXT);
-				text(mc, (mc.w - 6 * ulen(q2)) / 2, 80, q2, PM_TXT);
-				for (int i = 0; i < 2; ++i) pmButton(mc, yesno[i], i == focus, i == pressed);
+				title = "QUICK LOAD";
+				q1 = "Load the quick save?"; q2 = "Progress since it was saved is lost.";
+				info[0] = "QUICK LOAD loads the one quick save.";
+				info[1] = "Everything you did since QUICK SAVE is lost.";
+				info[2] = "The exit save is a different file: Load Game, Exit save.";
 			}
 			else if (page == 1)
 			{
-				pmFrame(mc, "EXIT GAME", g_lefty ? "D-Right Select   D-Down Back" : "A Select   B Back");
-				const char *q = inGame ? "Exit OpenXcom? It is quick-saved first." : "Exit OpenXcom?";
-				text(mc, (mc.w - 6 * ulen(q)) / 2, 70, q, PM_TXT);
-				for (int i = 0; i < 2; ++i) pmButton(mc, yesno[i], i == focus, i == pressed);
+				title = "EXIT GAME";
+				q1 = "Exit OpenXcom?";
+				if (inGame)
+				{
+					q2 = "The game is saved first, as \"Exit save\".";
+					info[0] = "The game is saved to its own file, \"Exit save\".";
+					info[1] = "Your quick save and your named saves are not touched.";
+					info[2] = "To carry on later: START on the main menu, CONTINUE.";
+					info[3] = "(Or Load Game, then Exit save.)";
+				}
+				else info[0] = "No game is running: nothing to save.";
+			}
+			else if (page == 2)
+			{
+				title = g_exitNotSavedWhy ? "NOT SAVED" : "SAVE FAILED";
+				if (g_exitNotSavedWhy) snprintf(refused, sizeof refused, "! Not saved: %s.", g_exitNotSavedWhy);
+				q1 = g_exitNotSavedWhy ? refused : "! The exit save failed (SD card full?).";
+				q2 = "Exit without saving? NO goes back.";
+				info[0] = g_exitNotSavedWhy ? "A battle is only saved at a quiet point of your own turn." : "The exit save could not be written.";
+				info[1] = "Your earlier saves are as they were.";
+				info[2] = "NO goes back to the game.";
+			}
+			if (q1) text(mc, (mc.w - 6 * ulen(q1)) / 2, 28, q1, page == 2 ? PM_WARN : PM_TXT, true);
+			if (q2) text(mc, (mc.w - 6 * ulen(q2)) / 2, 50, q2, PM_TXT);
+			for (int i = 0; i < n; ++i) pmButton(mc, bt[i], i == focus, i == pressed);
+
+			// top screen: what the rows do / the detail of the question
+			fill(ic, 0, 0, ic.w, ic.h, 8, 12, 40);
+			fill(ic, 0, 0, ic.w, 22, 40, 56, 120);
+			text(ic, 8, 5, "OPENXCOM", PM_HDR, true);
+			text(ic, ic.w - 8 - 6 * ulen(title), 5, title, page == 2 ? PM_WARN : PM_TXT);
+			fill(ic, 0, 224, ic.w, 16, 20, 30, 70);
+			text(ic, (ic.w - 6 * ulen(hint)) / 2, 226, hint, PM_HDR);
+			if (page == 0)
+			{
+				static const char *const helpGame[6] = {
+					"back to the game", "how to play on the 3DS",
+					"one slot; EXIT GAME does not touch it", "asks first, then loads the quick save",
+					"the game's own menu: saves with names", "asks, saves as \"Exit save\", then quits" };
+				static const char *const helpMenu[6] = {
+					"back to the main menu", "how to play on the 3DS",
+					"loads your newest exit or quick save", "only in a game",
+					"only in a game", "back to the Homebrew Menu" };
+				for (int i = 0; i < 6; ++i)
+				{
+					const char *h = inGame ? helpGame[i] : (i == 2 && !items[2].on) ? "no exit save or quick save yet" : helpMenu[i];
+					text(ic, 12, 36 + i * 28, items[i].label, !items[i].on ? PM_DIM : i == focus ? PM_HDR : PM_TXT, true);
+					text(ic, 156, 36 + i * 28, h, !items[i].on ? PM_DIM : PM_TXT);
+				}
+				text(ic, 12, 206, inGame ? "The game is paused while the menu is open." : "Tap a button on the touch screen, or use the D-pad and A.", PM_DIM);
 			}
 			else
-			{
-				pmFrame(mc, g_exitNotSavedWhy ? "NOT SAVED" : "SAVE FAILED", g_lefty ? "D-Right Select   D-Down Back" : "A Select   B Back");
-				char refused[64];
-				if (g_exitNotSavedWhy) snprintf(refused, sizeof refused, "! Not saved: %s.", g_exitNotSavedWhy);
-				const char *q1 = g_exitNotSavedWhy ? refused : "! The quick save failed (SD card full?).";
-				const char *q2 = "Exit without saving? NO goes back.";
-				text(mc, (mc.w - 6 * ulen(q1)) / 2, 62, q1, PM_TXT);
-				text(mc, (mc.w - 6 * ulen(q2)) / 2, 80, q2, PM_TXT);
-				for (int i = 0; i < 2; ++i) pmButton(mc, failno[i], i == focus, i == pressed);
-			}
-			fill(ic, 0, 0, ic.w, ic.h, 8, 12, 40);
-			text(ic, 8, 8, "OpenXcom", PM_HDR, true);
-			text(ic, 8, 28, inGame ? "Paused while the menu is open." : "Main menu.", PM_TXT);
-			blitCanvas(scr, top, 0);
-			blitCanvas(scr, bot, half);
-			openxcom3dsPresent(scr, onTop, false);   // the port's presenter: fills the top screen in every mode
+				for (int i = 0; i < 4; ++i)
+					if (info[i]) text(ic, 12, 48 + i * 24, info[i], i == 0 ? PM_TXT : PM_DIM);
+			blitCanvas(scr, mc, half);
+			// while the menu is open the top screen is the page above, never the game
+			openxcom3dsPresent(scr, false, false);
 			redraw = false;
 		}
 		else gspWaitForVBlank();
 	}
+	g_topWide = keepWide;
+	++g_topWideGen;
 	g_touchBlocked = (hidKeysHeld() & KEY_TOUCH) != 0;
 	SDL_PumpEvents();
 	SDL_Event ev;
@@ -733,16 +882,30 @@ void runPortMenu()
 	g_lastTick = 0;
 	g_padPrevHeld = hidKeysHeld();   // the button that closed the menu is not a new press for the game
 	OpenXcom::TopScreen3DS::invalidate();
+	openxcom3dsInvalidateFrame();
 	switch (action)
 	{
 	case 1: runManual(); break;
-	case 2: openxcom3dsSendKey(OpenXcom::Options::keyQuickSave); break;
+	case 2:
+		if (inGame) openxcom3dsSendKey(OpenXcom::Options::keyQuickSave);
+		else if (!resume.empty())
+		{
+			// CONTINUE: load the newest exit / quick save, as Load Game would
+			if (OpenXcom::Game *g = OpenXcom::State::game3ds())
+				g->pushState(new OpenXcom::LoadGameState(OpenXcom::OPT_MENU, resume, g->getScreen()->getPalette()));
+		}
+		break;
 	case 3: openxcom3dsSendKey(OpenXcom::Options::keyQuickLoad); break;
-	case 4: openxcom3dsSendKey(ctx == CTX_BATTLE ? OpenXcom::Options::keyBattleOptions : OpenXcom::Options::keyGeoOptions); break;
+	case 4:
+		// OPENXCOM-Q3: the game's own window opens with the pointer (and so the gold ring) on
+		// its CANCEL row, not in the middle of the screen where ABANDON GAME sits.
+		moveCursor(160.f, 159.f);
+		openxcom3dsSendKey(ctx == CTX_BATTLE ? OpenXcom::Options::keyBattleOptions : OpenXcom::Options::keyGeoOptions);
+		break;
 	case 10:
-		// Quick-save after the menu has closed, exactly as before OX-01 (saving inside
-		// the menu loop crashed the sound thread on exit once). If the save fails, the
-		// menu reopens on SAVE FAILED: EXIT ANYWAY quits, NO returns to the game.
+		// Save after the menu has closed, exactly as before OX-01 (saving inside the menu loop
+		// crashed the sound thread on exit once). If the save fails, the menu reopens on
+		// SAVE FAILED: EXIT ANYWAY quits, NO returns to the game.
 		if (g_pmExitNoSave || exitSave())
 		{
 			g_pmExitNoSave = false;
@@ -1141,6 +1304,12 @@ bool sameSurface(SDL_Surface *s, std::vector<Uint8> &prev, SDL_Color *pal)
 
 void openxcom3dsInvalidateFrame() { g_frameForce = true; }
 
+void openxcom3dsSetTopWide(const uint8_t *rgb)
+{
+	g_topWide = rgb;
+	++g_topWideGen;
+}
+
 bool openxcom3dsFrameChanged(SDL_Surface *screen, SDL_Surface *game, SDL_Surface *top, bool gameOnTop)
 {
 	const u64 now = svcGetSystemTick();
@@ -1148,6 +1317,8 @@ bool openxcom3dsFrameChanged(SDL_Surface *screen, SDL_Surface *game, SDL_Surface
 	if (openxcom3dsDebugLog() && !g_stStart) g_stStart = now;
 	if (g_prevFlipTick && (double)(now - g_prevFlipTick) > 100.0 * kTicksPerMs) g_frameForce = true;
 	g_prevFlipTick = now;
+	static unsigned prevWideGen = 0;
+	if (g_topWideGen != prevWideGen) { prevWideGen = g_topWideGen; g_frameForce = true; }   // the wide top page changed
 	const bool panel = top && game && top->w == game->w;
 	const int mode = (gameOnTop ? 1 : 0) | (panel ? 2 : 0) | (osGet3DSliderState() <= 0.0f ? 4 : 0);
 	// the D-pad focus ring follows the port's cursor position, which a hidden game cursor
@@ -1209,6 +1380,19 @@ void openxcom3dsPresent(SDL_Surface *scr, bool gameOnTop, bool ring)
 	}
 	if (gameOnTop)
 		blitScreen(fb, outW, pix, ymap, [outW](int x) { return x * kGameW / outW; });
+	else if (g_topWide)
+	{
+		// OPENXCOM-U1: the port's own 400 x 240 page, 1:1 (each column twice in the 800 mode)
+		const int shift = outW >= 800 ? 1 : 0;
+		for (int x = 0; x < outW; ++x)
+		{
+			u8 *col = fb + x * 240 * 3;
+			if (shift && (x & 1)) { memcpy(col, col - 240 * 3, 240 * 3); continue; }
+			const uint8_t *src = g_topWide + (x >> shift) * 3;
+			u8 *p = col + 239 * 3;                 // pixel (x, 0)
+			for (int y = 0; y < 240; ++y, p -= 3, src += 400 * 3) { p[0] = src[2]; p[1] = src[1]; p[2] = src[0]; }   // BGR8
+		}
+	}
 	else
 	{
 		const int shift = outW >= 800 ? 1 : 0;
@@ -1255,7 +1439,13 @@ void openxcom3dsPresent(SDL_Surface *scr, bool gameOnTop, bool ring)
 // next change between the two.
 bool openxcom3dsGameOnTop()
 {
-	const bool autoTop = context(0) == CTX_BATTLE;
+	OpenXcom::State *st = 0;
+	bool autoTop = context(&st) == CTX_BATTLE;
+	// OPENXCOM-X1: "Saving game" / "Loading game" over a battle is a message, not a window to
+	// tap: the battle stays where it is instead of jumping to the touch screen and back.
+	if (!autoTop && st && g_lastAutoTop == 1
+	    && (dynamic_cast<OpenXcom::SaveGameState*>(st) || dynamic_cast<OpenXcom::LoadGameState*>(st)))
+		autoTop = true;
 	if ((int)autoTop != g_lastAutoTop)
 	{
 		g_lastAutoTop = autoTop;

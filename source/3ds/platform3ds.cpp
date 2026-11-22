@@ -834,7 +834,10 @@ void runPortMenu()
 			}
 			if (q1) text(mc, (mc.w - 6 * ulen(q1)) / 2, 28, q1, page == 2 ? PM_WARN : PM_TXT, true);
 			if (q2) text(mc, (mc.w - 6 * ulen(q2)) / 2, 50, q2, PM_TXT);
-			for (int i = 0; i < n; ++i) pmButton(mc, bt[i], i == focus, i == pressed);
+			// the page may have changed in this very frame: draw that page's buttons
+			PmBtn *const db = page == 0 ? items : (page == 1 || page == 3) ? yesno : failno;
+			const int dn = page == 0 ? 6 : 2;
+			for (int i = 0; i < dn; ++i) pmButton(mc, db[i], i == focus, i == pressed);
 
 			// top screen: what the rows do / the detail of the question
 			fill(ic, 0, 0, ic.w, ic.h, 8, 12, 40);

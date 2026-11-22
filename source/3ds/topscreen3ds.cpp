@@ -486,21 +486,22 @@ static void drawControlsCard(Surface *top, const char *right)
 	static const Row rows[11] = {
 		{ "Stylus", "Stylus", "tap = click" },
 		{ "Circle Pad", "Circle Pad", "move the pointer" },
-		{ "A / B", "D-Right / D-Down", "click / back" },
-		{ "D-pad", "A/B/X/Y", "gold ring: jump to buttons" },
-		{ "C-Stick", "C-Stick", "scroll the map or globe" },
-		{ "L / R", "L / R", "soldier (battle), zoom (globe)" },
+		{ "A / B", "D-Rt / D-Dn", "click / back" },
+		{ "D-pad", "A/B/X/Y", "jump to buttons" },
+		{ "C-Stick", "C-Stick", "scroll map or globe" },
+		{ "L / R", "L / R", "soldier, or zoom" },
 		{ "Y", "D-Up", "kneel" },
 		{ "X twice", "D-Left twice", "end turn" },
 		{ "ZR", "ZR", "view level" },
 		{ "ZL", "ZL", "swap screens" },
-		{ "START", "START", "menu: save, manual, exit" },
+		{ "START", "START", "menu, save, manual" },
 	};
 	for (int i = 0; i < 11; ++i)
 	{
 		const int y = 26 + i * 18;
-		text(top, 8, y, lefty ? rows[i].keyLefty : rows[i].key, C_TITLE, true, 150);
-		text(top, 164, y + 4, rows[i].what, C_TEXT, false, 232);
+		// both columns in the game's big font: readable from arm's length
+		text(top, 8, y, lefty ? rows[i].keyLefty : rows[i].key, C_TITLE, true, 144);
+		text(top, 160, y, rows[i].what, C_TEXT, true, 236);
 	}
 	rect(top, 0, H - 16, W, 16, C_FRAME);
 	text(top, 6, H - 13, "Battle: tap a square to see the path, tap again to move.", C_TEXT);
@@ -721,11 +722,13 @@ static void drawBattlePad(Surface *top, SavedBattleGame *battle)
 		// OPENXCOM-X2 / X5: the face buttons are named here during the battle (they were only on
 		// the main menu's card), and after the first X the screen says what the second one does
 		const bool lefty = openxcom3dsLefty();
+		// (one line: the button row starts right under it; the two hints take turns)
 		if (g_endTurnArmed3ds)
 			text(top, rx + 2, 139, lefty ? "D-Left again: END TURN" : "X again: END TURN", C_WARN, false, rw - 4);
+		else if ((SDL_GetTicks() / 4000) & 1)
+			text(top, rx + 2, 139, lefty ? "D-Up kneel  D-Left x2 end  ZR level" : "Y kneel  X twice end turn  ZR level", C_TEXT, false, rw - 4);
 		else
 			text(top, rx + 2, 139, "Tap a map square: click it", C_TEXT, false, rw - 4);
-		text(top, rx + 2, 148, lefty ? "D-Up kneel  D-Left x2 end  ZR level" : "Y kneel  X twice end turn  ZR level", C_TEXT, false, rw - 4);
 	}
 
 	// battle buttons: two rows of six

@@ -36,7 +36,7 @@ ZL (or the Swap button) puts the game on the other screen, at any time. The game
 With the 3D slider all the way down, the top screen runs in its high-resolution mode, so text there is sharper. The port has no 3D picture; moving the slider up switches back to the normal mode.
 
 ## Left-handed play
-Open the manual (Start, then Manual) and tap Left hand: on / off at the bottom. The D-Pad and the A/B/X/Y buttons swap jobs: Y does what D-Pad up did, A what right did, B what down did, X what left did, and the reverse. Your choice is remembered, and the manual follows the same swap.
+Start, then LEFT HAND, or open the manual (Start, then Manual) and tap Left hand: on / off at the bottom. The D-Pad and the A/B/X/Y buttons swap jobs: Y does what D-Pad up did, A what right did, B what down did, X what left did, and the reverse. Your choice is remembered, and the manual follows the same swap.
 
 # Touch and cursor
 - Tap: left click where you tap.
@@ -156,11 +156,12 @@ Everything you research unlocks entries in the Ufopaedia: weapons, armour, craft
 
 # Saving and loading
 ## The Start menu
-Start opens a menu of six big buttons on the touch screen: RESUME, MANUAL, QUICK SAVE, QUICK LOAD, SAVE / LOAD / OPTIONS and EXIT GAME. Tap one, or use the D-pad and A. B or Start closes it. The top screen says what each one does.
+Start opens a menu of seven big buttons on the touch screen: RESUME, MANUAL, QUICK SAVE, QUICK LOAD, SAVE / LOAD / OPTIONS, LEFT HAND and EXIT GAME. Tap one, or use the D-pad and A. B or Start closes it. The top screen says what each one does.
 - QUICK SAVE writes the one quick save slot. Nothing else writes to it.
 - QUICK LOAD asks first ("Load the quick save?"). The choice starts on NO; YES loads it and you lose progress since it was saved.
 - SAVE / LOAD / OPTIONS opens the game's own menu, where saves have names (see Saving by hand). It opens with the pointer on Cancel.
-- EXIT GAME asks first (the choice starts on NO). YES saves a game in progress to its own file, shown as "Exit save" in Load Game, then quits. Your quick save and your named saves are not touched. If the save fails (SD card full?) it says SAVE FAILED and asks before quitting.
+- LEFT HAND swaps the D-pad and A/B/X/Y (the same switch as Left hand in this manual).
+- EXIT GAME asks "Exit OpenXcom?" (the choice starts on NO; B goes back). YES saves a game in progress to its own file, shown as "Exit save" in Load Game, then quits. Your quick save and your named saves are not touched. If the save fails (SD card full?) it says SAVE FAILED and asks before quitting.
 - In a battle, the exit save is made only at a quiet moment of your own turn. During the alien turn or while an action is still playing out it says NOT SAVED and why, leaves your saves as they were, and asks before quitting. Wait for your turn and try again.
 - Closing the game from the HOME menu does the same as EXIT GAME.
 

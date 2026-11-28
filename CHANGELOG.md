@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-27
+
+- Same as the other 3DS ports (cross-port pass): the Start menu has a LEFT HAND row before EXIT GAME (the same switch as Left hand in the manual; it flips at once and the menu stays open). Rows are 24 tall (29 px on screen) so seven fit.
+- The exit question's second line reads "It is saved first, as "Exit save"." in the house words.
+
 ## 2026-11-21 (audit fixes)
 
 - Top screen: every page the port draws there (battle dashboard, Geoscape dashboard, manual text, the Start menu's page, the controls card) now fills the whole 400x240 screen. They used to sit in a 320-wide column between black bars.

@@ -721,11 +721,13 @@ void runPortMenu()
 
 	// OPENXCOM-X4: on the main menu the third row is CONTINUE (the newest exit or quick save)
 	const std::string resume = inGame ? std::string() : newestResumeSave();
-	// 320 x 200 canvas, shown 1.2x taller: rows 28 tall (33 px on screen), 4 apart, 6 from the edges
-	PmBtn items[6] = {
-		{ 6, 6, 308, 28, "RESUME", true }, { 6, 38, 308, 28, "MANUAL", true },
-		{ 6, 70, 308, 28, inGame ? "QUICK SAVE" : "CONTINUE", inGame || !resume.empty() }, { 6, 102, 308, 28, "QUICK LOAD", inGame },
-		{ 6, 134, 308, 28, "SAVE / LOAD / OPTIONS", inGame }, { 6, 166, 308, 28, "EXIT GAME", true } };
+	// 320 x 200 canvas, shown 1.2x taller: rows 24 tall (29 px on screen), 3 apart, 6 from the top.
+	// House order (cross-port pass): RESUME, MANUAL, save, load, options, LEFT HAND, EXIT GAME.
+	PmBtn items[7] = {
+		{ 6, 6, 308, 24, "RESUME", true }, { 6, 33, 308, 24, "MANUAL", true },
+		{ 6, 60, 308, 24, inGame ? "QUICK SAVE" : "CONTINUE", inGame || !resume.empty() }, { 6, 87, 308, 24, "QUICK LOAD", inGame },
+		{ 6, 114, 308, 24, "SAVE / LOAD / OPTIONS", inGame }, { 6, 141, 308, 24, leftyQuery() ? "LEFT HAND: ON" : "LEFT HAND: OFF", true },
+		{ 6, 168, 308, 24, "EXIT GAME", true } };
 	PmBtn yesno[2] = { { 6, 84, 152, 110, "YES", true }, { 162, 84, 152, 110, "NO", true } };
 	PmBtn failno[2] = { { 6, 84, 152, 110, "EXIT ANYWAY", true }, { 162, 84, 152, 110, "NO", true } };
 	// Rule 17: a game in progress is saved before EXIT (its own "Exit save" file; Ironman games
@@ -742,14 +744,14 @@ void runPortMenu()
 		hidScanInput();
 		const u32 down = remapKeys(hidKeysDown()), rep = remapKeys(hidKeysDownRepeat());   // left-handed play
 		PmBtn *bt = page == 0 ? items : (page == 1 || page == 3) ? yesno : failno;   // page 3: QUICK LOAD confirm (OX-11)
-		const int n = page == 0 ? 6 : 2;
+		const int n = page == 0 ? 7 : 2;
 		if (pressFrames && !--pressFrames) { pressed = -1; redraw = true; if (action >= 0) break; }
 		if (action < 0 && pressFrames == 0)
 		{
 			if (down & (KEY_B | KEY_START))
 			{
 				click3ds::play();
-				if (page == 1) { page = 0; focus = 5; redraw = true; }
+				if (page == 1) { page = 0; focus = 6; redraw = true; }
 				else if (page == 3) { page = 0; focus = 3; redraw = true; }
 				else break;   // page 2 (save failed): back to the game
 			}
@@ -772,7 +774,12 @@ void runPortMenu()
 			{
 				click3ds::play();
 				focus = hit; pressed = hit; pressFrames = 6; redraw = true;
-				if (page == 0 && hit == 5) { page = 1; focus = 1; pressed = -1; pressFrames = 0; }
+				if (page == 0 && hit == 6) { page = 1; focus = 1; pressed = -1; pressFrames = 0; }
+				else if (page == 0 && hit == 5)   // LEFT HAND: the manual's switch too; the menu stays open
+				{
+					setLefty(!g_lefty);
+					items[5].label = g_lefty ? "LEFT HAND: ON" : "LEFT HAND: OFF";
+				}
 				else if (page == 0 && hit == 3) { page = 3; focus = 1; pressed = -1; pressFrames = 0; }   // OX-11: ask first, focus on NO
 				else if (page == 3)
 				{
@@ -782,7 +789,7 @@ void runPortMenu()
 				else if (page == 1)
 				{
 					if (hit == 0) action = 10;   // saved after the menu closes (as before OX-01)
-					else { page = 0; focus = 5; pressed = -1; pressFrames = 0; }
+					else { page = 0; focus = 6; pressed = -1; pressFrames = 0; }
 				}
 				else if (page == 2) { if (hit == 0) { g_pmExitNoSave = true; action = 10; } else { pressed = -1; pressFrames = 0; break; } }
 				else action = hit;
@@ -814,7 +821,7 @@ void runPortMenu()
 				q1 = "Exit OpenXcom?";
 				if (inGame)
 				{
-					q2 = "The game is saved first, as \"Exit save\".";
+					q2 = "It is saved first, as \"Exit save\".";
 					info[0] = "The game is saved to its own file, \"Exit save\".";
 					info[1] = "Your quick save and your named saves are not touched.";
 					info[2] = "To carry on later: START on the main menu, CONTINUE.";
@@ -836,7 +843,7 @@ void runPortMenu()
 			if (q2) text(mc, (mc.w - 6 * ulen(q2)) / 2, 50, q2, PM_TXT);
 			// the page may have changed in this very frame: draw that page's buttons
 			PmBtn *const db = page == 0 ? items : (page == 1 || page == 3) ? yesno : failno;
-			const int dn = page == 0 ? 6 : 2;
+			const int dn = page == 0 ? 7 : 2;
 			for (int i = 0; i < dn; ++i) pmButton(mc, db[i], i == focus, i == pressed);
 
 			// top screen: what the rows do / the detail of the question
@@ -848,19 +855,20 @@ void runPortMenu()
 			text(ic, (ic.w - 6 * ulen(hint)) / 2, 226, hint, PM_HDR);
 			if (page == 0)
 			{
-				static const char *const helpGame[6] = {
+				static const char *const helpGame[7] = {
 					"back to the game", "how to play on the 3DS",
 					"one slot; EXIT GAME does not touch it", "asks first, then loads the quick save",
-					"the game's own menu: saves with names", "asks, saves as \"Exit save\", then quits" };
-				static const char *const helpMenu[6] = {
+					"the game's own menu: saves with names", "swap the D-pad and A/B/X/Y",
+					"asks, saves as \"Exit save\", then quits" };
+				static const char *const helpMenu[7] = {
 					"back to the main menu", "how to play on the 3DS",
 					"loads your newest exit or quick save", "only in a game",
-					"only in a game", "back to the Homebrew Menu" };
-				for (int i = 0; i < 6; ++i)
+					"only in a game", "swap the D-pad and A/B/X/Y", "back to the Homebrew Menu" };
+				for (int i = 0; i < 7; ++i)
 				{
 					const char *h = inGame ? helpGame[i] : (i == 2 && !items[2].on) ? "no exit save or quick save yet" : helpMenu[i];
-					text(ic, 12, 36 + i * 28, items[i].label, !items[i].on ? PM_DIM : i == focus ? PM_HDR : PM_TXT, true);
-					text(ic, 156, 36 + i * 28, h, !items[i].on ? PM_DIM : PM_TXT);
+					text(ic, 12, 34 + i * 24, items[i].label, !items[i].on ? PM_DIM : i == focus ? PM_HDR : PM_TXT, true);
+					text(ic, 156, 34 + i * 24, h, !items[i].on ? PM_DIM : PM_TXT);
 				}
 				text(ic, 12, 206, inGame ? "The game is paused while the menu is open." : "Tap a button on the touch screen, or use the D-pad and A.", PM_DIM);
 			}
